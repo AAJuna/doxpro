@@ -43,31 +43,40 @@ export const documentItemSchema = z.object({
   discountPct: z.coerce.number().min(0).max(100),
 });
 
-export const documentSchema = z.object({
-  type: z.enum(["penawaran", "invoice", "kwitansi", "proposal"]),
-  number: z.string().min(1, "Nomor dokumen wajib diisi"),
-  date: z.string().min(1, "Tanggal wajib diisi"),
-  validUntil: z.string().optional(),
-  dueDate: z.string().optional(),
-  clientId: z.string().min(1, "Klien wajib dipilih"),
-  status: z.enum(["draft", "sent", "paid", "overdue", "cancelled", "accepted", "rejected"]),
-  notes: z.string().optional(),
-  termsText: z.string().optional(),
-  paymentMethod: z.string().optional(),
-  receivedFrom: z.string().optional(),
-  proposalContent: z.string().optional(),
-  items: z.array(documentItemSchema).default([]),
-  customizations: z.object({
-    style: z.enum(["classic", "modern", "compact"]),
-    primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-    fontFamily: z.string(),
-    headerLayout: z.enum(["left", "center", "right"]),
-    showLogo: z.boolean(),
-    showWatermark: z.boolean(),
-    logoSize: z.enum(["S", "M", "L", "XL"]).optional(),
-    logoPosition: z.enum(["left", "center", "right"]).optional(),
-  }),
-});
+export const documentSchema = z
+  .object({
+    type: z.enum(["penawaran", "invoice", "kwitansi", "proposal"]),
+    number: z.string().min(1, "Nomor dokumen wajib diisi"),
+    date: z.string().min(1, "Tanggal wajib diisi"),
+    validUntil: z.string().optional(),
+    dueDate: z.string().optional(),
+    clientId: z.string().min(1, "Klien wajib dipilih"),
+    status: z.enum(["draft", "sent", "paid", "overdue", "cancelled", "accepted", "rejected"]),
+    notes: z.string().optional(),
+    termsText: z.string().optional(),
+    paymentMethod: z.string().optional(),
+    receivedFrom: z.string().optional(),
+    proposalContent: z.string().optional(),
+    items: z.array(documentItemSchema).default([]),
+    customizations: z.object({
+      style: z.enum(["classic", "modern", "compact"]),
+      primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+      fontFamily: z.string(),
+      headerLayout: z.enum(["left", "center", "right"]),
+      showLogo: z.boolean(),
+      showWatermark: z.boolean(),
+      logoSize: z.enum(["S", "M", "L", "XL"]).optional(),
+      logoPosition: z.enum(["left", "center", "right"]).optional(),
+    }),
+  })
+  .refine((d) => !d.validUntil || d.validUntil >= d.date, {
+    message: "Tanggal berlaku harus sama atau setelah tanggal terbit",
+    path: ["validUntil"],
+  })
+  .refine((d) => !d.dueDate || d.dueDate >= d.date, {
+    message: "Tanggal jatuh tempo harus sama atau setelah tanggal terbit",
+    path: ["dueDate"],
+  });
 
 export type CompanyInput = z.infer<typeof companySchema>;
 export type ClientInput = z.infer<typeof clientSchema>;

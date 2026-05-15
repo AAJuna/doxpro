@@ -15,8 +15,8 @@ doxpro adalah aplikasi desktop (Windows + macOS) yang membantu UMKM, freelancer,
 - Penomoran dokumen kustom dengan token (`{TYPE}/{YYYY}/{MM}/{SEQ}`)
 - Multi-bahasa UI: Indonesia / English
 - Dark mode + light mode
-- Backup & restore (JSON terenkripsi)
-- Cloud sync opsional via Supabase
+- Backup & restore terenkripsi AES-256-GCM (file `.dxbk`, password user)
+- Cloud sync via Supabase (work in progress — direncanakan untuk rilis berikutnya)
 - Installer ringan (~10–15 MB)
 
 ## Tech Stack

@@ -15,6 +15,32 @@ import type {
 
 type Row = Record<string, unknown>;
 
+function safeJsonParse<T>(value: unknown, fallback: T, context: string): T {
+  if (typeof value !== "string" || value.length === 0) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch (e) {
+    console.error(`[doxpro] Gagal parse JSON (${context}):`, e);
+    return fallback;
+  }
+}
+
+const EMPTY_TOTALS: DocumentTotals = {
+  subtotal: 0,
+  totalDiscount: 0,
+  totalTax: 0,
+  grandTotal: 0,
+};
+
+const EMPTY_CUSTOMIZATIONS: DocumentCustomizations = {
+  style: "modern",
+  primaryColor: "#0f172a",
+  fontFamily: "Inter",
+  headerLayout: "left",
+  showLogo: true,
+  showWatermark: false,
+};
+
 function mapCompany(r: Row): Company {
   return {
     id: r.id as string,
@@ -85,8 +111,12 @@ function mapDocument(r: Row, items: DocumentItem[]): DocumentRecord {
     dueDate: (r.due_date ?? undefined) as string | undefined,
     clientId: r.client_id as string,
     status: r.status as DocumentStatus,
-    totals: JSON.parse(r.totals_json as string) as DocumentTotals,
-    customizations: JSON.parse(r.customizations_json as string) as DocumentCustomizations,
+    totals: safeJsonParse<DocumentTotals>(r.totals_json, EMPTY_TOTALS, `documents.totals_json id=${r.id}`),
+    customizations: safeJsonParse<DocumentCustomizations>(
+      r.customizations_json,
+      EMPTY_CUSTOMIZATIONS,
+      `documents.customizations_json id=${r.id}`,
+    ),
     signatureId: (r.signature_id ?? undefined) as string | undefined,
     notes: (r.notes ?? undefined) as string | undefined,
     termsText: (r.terms_text ?? undefined) as string | undefined,
@@ -360,13 +390,19 @@ export async function deleteDocument(id: string): Promise<void> {
   await execute("DELETE FROM documents WHERE id=?", [id]);
 }
 
+// Atomic increment via UPSERT + RETURNING (SQLite >= 3.35). Concurrent
+// callers each get a distinct sequence — no race. Tradeoff: opening the
+// editor allocates a number; cancelling without save leaves a gap, which
+// is preferable to duplicate numbers on simultaneous saves.
 export async function nextDocumentSequence(type: DocumentType, year: number, month: number): Promise<number> {
-  const prefix = `${year}-${month.toString().padStart(2, "0")}`;
-  const rows = await select<Row>(
-    "SELECT COUNT(*) as c FROM documents WHERE type=? AND date LIKE ?",
-    [type, `${prefix}%`],
+  const ym = `${year}-${month.toString().padStart(2, "0")}`;
+  const rows = await select<{ next_seq: number }>(
+    `INSERT INTO document_sequences (type, year_month, next_seq) VALUES (?, ?, 1)
+     ON CONFLICT(type, year_month) DO UPDATE SET next_seq = next_seq + 1
+     RETURNING next_seq`,
+    [type, ym],
   );
-  return ((rows[0]?.c as number) ?? 0) + 1;
+  return rows[0]?.next_seq ?? 1;
 }
 
 // ---------- Signatures ----------

@@ -128,4 +128,49 @@ describe("documentSchema", () => {
     });
     expect(r.success).toBe(true);
   });
+
+  const baseDoc = {
+    type: "invoice" as const,
+    number: "INV/2026/05/001",
+    date: "2026-05-14",
+    clientId: "client-1",
+    status: "draft" as const,
+    items: [],
+    customizations: {
+      style: "modern" as const,
+      primaryColor: "#0f172a",
+      fontFamily: "Inter",
+      headerLayout: "left" as const,
+      showLogo: true,
+      showWatermark: false,
+    },
+  };
+
+  it("tolak dueDate sebelum tanggal terbit", () => {
+    const r = documentSchema.safeParse({ ...baseDoc, dueDate: "2026-05-01" });
+    expect(r.success).toBe(false);
+  });
+
+  it("terima dueDate setelah tanggal terbit", () => {
+    const r = documentSchema.safeParse({ ...baseDoc, dueDate: "2026-06-01" });
+    expect(r.success).toBe(true);
+  });
+
+  it("tolak validUntil sebelum tanggal terbit", () => {
+    const r = documentSchema.safeParse({
+      ...baseDoc,
+      type: "penawaran",
+      validUntil: "2026-05-01",
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("terima validUntil sama dengan tanggal terbit", () => {
+    const r = documentSchema.safeParse({
+      ...baseDoc,
+      type: "penawaran",
+      validUntil: "2026-05-14",
+    });
+    expect(r.success).toBe(true);
+  });
 });
