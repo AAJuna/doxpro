@@ -34,7 +34,6 @@ export function LogoUpload({ value, onChange }: LogoUploadProps) {
       <div className="flex items-start gap-4">
         <div className="flex h-24 w-32 items-center justify-center overflow-hidden rounded-lg border bg-secondary/30">
           {value ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img src={value} alt="Logo" className="max-h-full max-w-full object-contain" />
           ) : (
             <ImageIcon className="h-8 w-8 text-muted-foreground" />
