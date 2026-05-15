@@ -44,3 +44,16 @@ test-results
 *.sqlite
 *.sqlite-journal
 local-data/
+
+# TypeScript build artifacts (from `tsc -b`)
+*.tsbuildinfo
+# Generated outputs from root-level *.config.ts files
+/vite.config.js
+/vite.config.d.ts
+/drizzle.config.js
+/drizzle.config.d.ts
+/playwright.config.js
+/playwright.config.d.ts
+/postcss.config.js.d.ts
+/tailwind.config.js
+/tailwind.config.d.ts
