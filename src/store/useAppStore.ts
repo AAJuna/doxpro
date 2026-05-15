@@ -1,0 +1,46 @@
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Company, AppSettings } from "@/types";
+
+interface AppState {
+  company: Company | null;
+  settings: AppSettings;
+  isOnboarded: boolean;
+  theme: "light" | "dark" | "system";
+
+  setCompany: (c: Company | null) => void;
+  setSettings: (s: Partial<AppSettings>) => void;
+  setOnboarded: (v: boolean) => void;
+  setTheme: (t: "light" | "dark" | "system") => void;
+}
+
+const defaultSettings: AppSettings = {
+  defaultCurrency: "IDR",
+  defaultTaxRate: 11,
+  numberingScheme: "{TYPE}/{YYYY}/{MM}/{SEQ}",
+  language: "id",
+  theme: "system",
+  cloudSyncEnabled: false,
+  autoBackupEnabled: true,
+};
+
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      company: null,
+      settings: defaultSettings,
+      isOnboarded: false,
+      theme: "system",
+
+      setCompany: (c) => set({ company: c }),
+      setSettings: (s) =>
+        set((state) => ({ settings: { ...state.settings, ...s } })),
+      setOnboarded: (v) => set({ isOnboarded: v }),
+      setTheme: (t) => set({ theme: t }),
+    }),
+    {
+      name: "doxpro-app",
+      partialize: (s) => ({ settings: s.settings, theme: s.theme }),
+    },
+  ),
+);
