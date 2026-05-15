@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FileText, Plus, Search, Trash2, Copy, Download } from "lucide-react";
+import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useConfirm } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import {
   DropdownMenu,
@@ -28,7 +29,7 @@ import {
   getCompany,
   nextDocumentSequence,
 } from "@/lib/db/queries";
-import { renderPdfBlob, downloadBlob, defaultFilename } from "@/lib/pdf/generate";
+import { renderPdfBlob, downloadBlob, defaultFilename, renderPdfsToZip, bulkZipFilename } from "@/lib/pdf/generate";
 import { generateDocumentNumber } from "@/lib/calc";
 import { useAppStore } from "@/store/useAppStore";
 import { uuid, nowIso } from "@/lib/utils";
@@ -59,6 +60,8 @@ export function DocumentsList() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | DocumentType>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | DocumentStatus>("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
   const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { data: docs = [], isLoading } = useQuery({
@@ -124,6 +127,65 @@ export function DocumentsList() {
     }
   };
 
+  const downloadSelectedAsZip = async () => {
+    const selected = docs.filter((d) => selectedIds.has(d.id));
+    if (selected.length === 0) return;
+    const company = await getCompany();
+    if (!company) {
+      toast.error("Data perusahaan belum lengkap");
+      return;
+    }
+    const sigs = await listSignatures();
+    const entries = selected
+      .map((doc) => {
+        const client = clients.find((c) => c.id === doc.clientId);
+        if (!client) return null;
+        const signature = doc.signatureId
+          ? sigs.find((s) => s.id === doc.signatureId)
+          : sigs.find((s) => s.isDefault);
+        return { doc, client, signature };
+      })
+      .filter((e): e is { doc: DocumentRecord; client: typeof clients[number]; signature: typeof sigs[number] | undefined } => e !== null);
+
+    if (entries.length === 0) {
+      toast.error("Tidak ada dokumen valid (klien hilang)");
+      return;
+    }
+    if (entries.length < selected.length) {
+      toast.warning(`${selected.length - entries.length} dokumen di-skip karena klien tidak ditemukan`);
+    }
+
+    setBulkProgress({ done: 0, total: entries.length });
+    try {
+      const blob = await renderPdfsToZip(entries, company, (done, total) =>
+        setBulkProgress({ done, total }),
+      );
+      downloadBlob(blob, bulkZipFilename());
+      toast.success(`${entries.length} PDF di-pack jadi ZIP`);
+      setSelectedIds(new Set());
+    } catch (e) {
+      toast.error("Gagal bikin ZIP: " + String(e));
+    } finally {
+      setBulkProgress(null);
+    }
+  };
+
+  const deleteSelected = async () => {
+    const selected = docs.filter((d) => selectedIds.has(d.id));
+    if (selected.length === 0) return;
+    const ok = await confirm({
+      title: `Hapus ${selected.length} dokumen?`,
+      description: "Semua dokumen yang dipilih akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.",
+      confirmLabel: "Hapus semua",
+      destructive: true,
+    });
+    if (!ok) return;
+    for (const d of selected) {
+      await deleteMutation.mutateAsync(d.id);
+    }
+    setSelectedIds(new Set());
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -185,6 +247,53 @@ export function DocumentsList() {
         </Select>
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="mb-3 flex items-center justify-between rounded-lg border bg-primary/5 px-4 py-2">
+          <div className="flex items-center gap-3 text-sm">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setSelectedIds(new Set())}
+              title="Batal pilih"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <span className="font-medium">{selectedIds.size} dokumen dipilih</span>
+            {bulkProgress ? (
+              <span className="text-xs text-muted-foreground">
+                Generating PDF {bulkProgress.done}/{bulkProgress.total}...
+              </span>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={downloadSelectedAsZip}
+              disabled={!!bulkProgress}
+            >
+              <FileArchive className="h-4 w-4" /> Unduh ZIP
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={deleteSelected}
+              disabled={!!bulkProgress}
+            >
+              <Trash2 className="h-4 w-4" /> Hapus
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {bulkProgress ? (
+        <Progress
+          value={(bulkProgress.done / bulkProgress.total) * 100}
+          className="mb-3 h-1"
+        />
+      ) : null}
+
       <Card className="p-4">
         {isLoading ? (
           <div className="space-y-2">
@@ -198,6 +307,10 @@ export function DocumentsList() {
             rowKey={(d) => d.id}
             onRowClick={(d) => navigate(`/documents/${d.id}`)}
             initialSort={{ columnId: "date", direction: "desc" }}
+            selectable={{
+              selectedIds,
+              onSelectionChange: setSelectedIds,
+            }}
             empty={
               <EmptyState
                 icon={FileText}

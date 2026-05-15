@@ -53,6 +53,7 @@
     "drizzle-orm": "^0.36.4",
     "framer-motion": "^11.11.17",
     "i18next": "^23.16.5",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-day-picker": "^10.0.1",

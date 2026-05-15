@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 export interface DataTableColumn<T> {
@@ -32,6 +33,11 @@ export interface DataTableProps<T> {
   /** Page size (default 25). Pass 0 to disable pagination. */
   pageSize?: number;
   initialSort?: { columnId: string; direction: "asc" | "desc" };
+  /** Enable row selection (renders checkbox column). Pass selected ids and handler. */
+  selectable?: {
+    selectedIds: Set<string>;
+    onSelectionChange: (ids: Set<string>) => void;
+  };
 }
 
 type Direction = "asc" | "desc";
@@ -44,6 +50,7 @@ export function DataTable<T>({
   empty,
   pageSize = 25,
   initialSort,
+  selectable,
 }: DataTableProps<T>) {
   const [sortColumn, setSortColumn] = useState<string | null>(initialSort?.columnId ?? null);
   const [sortDirection, setSortDirection] = useState<Direction>(initialSort?.direction ?? "asc");
@@ -71,9 +78,6 @@ export function DataTable<T>({
 
   const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(sorted.length / pageSize)) : 1;
   const safePage = Math.min(page, totalPages - 1);
-  if (safePage !== page) {
-    // clamp without effect — render with safePage; correct on next interaction
-  }
 
   const toggleSort = (col: DataTableColumn<T>) => {
     if (!col.sortBy) return;
@@ -87,6 +91,31 @@ export function DataTable<T>({
     }
   };
 
+  // Selection helpers
+  const pageIds = useMemo(() => paginated.map(rowKey), [paginated, rowKey]);
+  const allOnPageSelected =
+    selectable !== undefined &&
+    pageIds.length > 0 &&
+    pageIds.every((id) => selectable.selectedIds.has(id));
+  const someOnPageSelected =
+    selectable !== undefined && pageIds.some((id) => selectable.selectedIds.has(id));
+
+  const togglePageAll = (checked: boolean) => {
+    if (!selectable) return;
+    const next = new Set(selectable.selectedIds);
+    if (checked) pageIds.forEach((id) => next.add(id));
+    else pageIds.forEach((id) => next.delete(id));
+    selectable.onSelectionChange(next);
+  };
+
+  const toggleRow = (id: string, checked: boolean) => {
+    if (!selectable) return;
+    const next = new Set(selectable.selectedIds);
+    if (checked) next.add(id);
+    else next.delete(id);
+    selectable.onSelectionChange(next);
+  };
+
   if (data.length === 0 && empty) {
     return <>{empty}</>;
   }
@@ -96,6 +125,21 @@ export function DataTable<T>({
       <Table>
         <TableHeader>
           <TableRow>
+            {selectable ? (
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={
+                    allOnPageSelected
+                      ? true
+                      : someOnPageSelected
+                        ? "indeterminate"
+                        : false
+                  }
+                  onCheckedChange={(v) => togglePageAll(v === true)}
+                  aria-label="Pilih semua"
+                />
+              </TableHead>
+            ) : null}
             {columns.map((col) => (
               <TableHead
                 key={col.id}
@@ -121,19 +165,35 @@ export function DataTable<T>({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {paginated.map((row) => (
-            <TableRow
-              key={rowKey(row)}
-              className={onRowClick ? "cursor-pointer" : undefined}
-              onClick={() => onRowClick?.(row)}
-            >
-              {columns.map((col) => (
-                <TableCell key={col.id} className={col.className}>
-                  {col.cell(row)}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
+          {paginated.map((row) => {
+            const id = rowKey(row);
+            const isSelected = selectable?.selectedIds.has(id) ?? false;
+            return (
+              <TableRow
+                key={id}
+                className={cn(
+                  onRowClick ? "cursor-pointer" : undefined,
+                  isSelected && "bg-primary/5",
+                )}
+                onClick={() => onRowClick?.(row)}
+              >
+                {selectable ? (
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(v) => toggleRow(id, v === true)}
+                      aria-label="Pilih baris"
+                    />
+                  </TableCell>
+                ) : null}
+                {columns.map((col) => (
+                  <TableCell key={col.id} className={col.className}>
+                    {col.cell(row)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
 
