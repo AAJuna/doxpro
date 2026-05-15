@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FileText, Plus, TrendingUp, AlertCircle, Users, DollarSign, Clock, Sparkles } from "lucide-react";
+import { FileText, Plus, TrendingUp, AlertCircle, Users, DollarSign, Clock, Sparkles, RefreshCw } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -26,9 +26,26 @@ export function Dashboard() {
   const settings = useAppStore((s) => s.settings);
   const queryClient = useQueryClient();
   const [seeding, setSeeding] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const { data: docs = [] } = useQuery({ queryKey: ["documents"], queryFn: () => listDocuments() });
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: listClients });
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["documents"] }),
+        queryClient.invalidateQueries({ queryKey: ["clients"] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+      ]);
+      toast.success("Data diperbarui");
+    } catch (e) {
+      toast.error("Gagal refresh: " + String(e));
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleSeed = async () => {
     setSeeding(true);
@@ -115,6 +132,10 @@ export function Dashboard() {
             Berikut ringkasan aktivitas bisnis Anda.
           </p>
         </div>
+        <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "Memperbarui..." : "Refresh"}
+        </Button>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
