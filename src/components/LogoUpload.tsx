@@ -2,9 +2,9 @@ import { useRef } from "react";
 import { Upload, X, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { validateImageUpload } from "@/lib/file-validation";
 
 const MAX_BYTES = 500 * 1024; // 500 KB
-const ACCEPTED = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 
 interface LogoUploadProps {
   value?: string;
@@ -14,13 +14,10 @@ interface LogoUploadProps {
 export function LogoUpload({ value, onChange }: LogoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = (file: File) => {
-    if (!ACCEPTED.includes(file.type)) {
-      toast.error("Format tidak didukung. Pakai PNG, JPG, WEBP, atau SVG.");
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      toast.error(`Ukuran maks 500 KB. File ini ${Math.round(file.size / 1024)} KB.`);
+  const handleFile = async (file: File) => {
+    const result = await validateImageUpload(file, { maxBytes: MAX_BYTES });
+    if (!result.ok) {
+      toast.error(result.error ?? "File tidak valid");
       return;
     }
     const reader = new FileReader();
@@ -65,18 +62,18 @@ export function LogoUpload({ value, onChange }: LogoUploadProps) {
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            PNG / JPG / WEBP / SVG, maks 500 KB. Tampil di header dokumen PDF.
+            PNG / JPG / WEBP, maks 500 KB. Tampil di header dokumen PDF.
           </p>
         </div>
       </div>
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED.join(",")}
+        accept="image/png,image/jpeg,image/webp"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (f) handleFile(f);
+          if (f) void handleFile(f);
           e.target.value = "";
         }}
       />

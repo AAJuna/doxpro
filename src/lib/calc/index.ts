@@ -42,7 +42,13 @@ export function calcTotals(
 }
 
 export function round2(n: number): number {
-  return Math.round((n + Number.EPSILON) * 100) / 100;
+  if (!Number.isFinite(n)) return 0;
+  // Round half-away-from-zero so symmetric values (e.g. ±1.005) round to ±1.01.
+  // EPSILON is added before multiplication to nudge IEEE-754 underestimates
+  // like (1.005 * 100) === 100.49999... up across the rounding boundary.
+  const abs = Math.abs(n);
+  const rounded = Math.round((abs + Number.EPSILON) * 100) / 100;
+  return n < 0 ? -rounded : rounded;
 }
 
 export function generateDocumentNumber(

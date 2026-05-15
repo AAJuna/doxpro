@@ -69,6 +69,23 @@ describe("round2", () => {
     expect(round2(1.005)).toBe(1.01);
     expect(round2(1.004)).toBe(1.0);
   });
+
+  it("bulatkan simetris untuk angka negatif (half away from zero)", () => {
+    expect(round2(-1.005)).toBe(-1.01);
+    expect(round2(-1.004)).toBe(-1.0);
+    expect(round2(-0.5)).toBe(-0.5);
+  });
+
+  it("handle nilai non-finite", () => {
+    expect(round2(NaN)).toBe(0);
+    expect(round2(Infinity)).toBe(0);
+    expect(round2(-Infinity)).toBe(0);
+  });
+
+  it("nol dipertahankan", () => {
+    expect(round2(0)).toBe(0);
+    expect(Object.is(round2(0), 0)).toBe(true);
+  });
 });
 
 describe("generateDocumentNumber", () => {
