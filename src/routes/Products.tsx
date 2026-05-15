@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { productSchema, type ProductInput } from "@/lib/validators";
 import { listProducts, saveProduct, deleteProduct } from "@/lib/db/queries";
 import { formatCurrency } from "@/lib/format";
@@ -115,69 +115,98 @@ export function Products() {
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            icon={Package}
-            title="Belum ada produk/jasa"
-            description={
-              products.length === 0
-                ? "Tambah item agar bisa diambil otomatis saat buat dokumen."
-                : "Tidak ada produk yang cocok dengan pencarian."
-            }
-            action={
-              products.length === 0
-                ? { label: "Tambah Item", onClick: openCreate, icon: Plus }
-                : undefined
-            }
-          />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nama</TableHead>
-                <TableHead>Deskripsi</TableHead>
-                <TableHead className="text-right">Harga</TableHead>
-                <TableHead>Satuan</TableHead>
-                <TableHead className="text-right">PPN</TableHead>
-                <TableHead className="w-24"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="text-muted-foreground line-clamp-1">
-                    {p.description || "—"}
-                  </TableCell>
-                  <TableCell className="text-right">{formatCurrency(p.price)}</TableCell>
-                  <TableCell>{p.unit}</TableCell>
-                  <TableCell className="text-right">{p.taxRate}%</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={async () => {
-                          const ok = await confirm({
-                            title: "Hapus produk?",
-                            description: `${p.name} akan dihapus dari katalog.`,
-                            confirmLabel: "Hapus",
-                            destructive: true,
-                          });
-                          if (ok) deleteMutation.mutate(p.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="p-4">
+            <DataTable
+              data={filtered}
+              rowKey={(p) => p.id}
+              initialSort={{ columnId: "name", direction: "asc" }}
+              empty={
+                <EmptyState
+                  icon={Package}
+                  title="Belum ada produk/jasa"
+                  description={
+                    products.length === 0
+                      ? "Tambah item agar bisa diambil otomatis saat buat dokumen."
+                      : "Tidak ada produk yang cocok dengan pencarian."
+                  }
+                  action={
+                    products.length === 0
+                      ? { label: "Tambah Item", onClick: openCreate, icon: Plus }
+                      : undefined
+                  }
+                />
+              }
+              columns={
+                [
+                  {
+                    id: "name",
+                    header: "Nama",
+                    sortBy: (p) => p.name,
+                    cell: (p) => <span className="font-medium">{p.name}</span>,
+                  },
+                  {
+                    id: "description",
+                    header: "Deskripsi",
+                    cell: (p) => (
+                      <span className="text-muted-foreground line-clamp-1">
+                        {p.description || "—"}
+                      </span>
+                    ),
+                  },
+                  {
+                    id: "price",
+                    header: "Harga",
+                    sortBy: (p) => p.price,
+                    headerClassName: "text-right",
+                    className: "text-right",
+                    cell: (p) => formatCurrency(p.price),
+                  },
+                  {
+                    id: "unit",
+                    header: "Satuan",
+                    sortBy: (p) => p.unit,
+                    cell: (p) => p.unit,
+                  },
+                  {
+                    id: "taxRate",
+                    header: "PPN",
+                    sortBy: (p) => p.taxRate,
+                    headerClassName: "text-right",
+                    className: "text-right",
+                    cell: (p) => `${p.taxRate}%`,
+                  },
+                  {
+                    id: "actions",
+                    header: "",
+                    headerClassName: "w-24",
+                    cell: (p) => (
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: "Hapus produk?",
+                              description: `${p.name} akan dihapus dari katalog.`,
+                              confirmLabel: "Hapus",
+                              destructive: true,
+                            });
+                            if (ok) deleteMutation.mutate(p.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ),
+                  },
+                ] satisfies DataTableColumn<Product>[]
+              }
+            />
+          </div>
         )}
       </Card>
 

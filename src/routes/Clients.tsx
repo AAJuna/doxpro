@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { clientSchema, type ClientInput } from "@/lib/validators";
 import { listClients, saveClient, deleteClient } from "@/lib/db/queries";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -128,65 +128,89 @@ export function Clients() {
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="Belum ada klien"
-            description={
-              clients.length === 0
-                ? "Tambah klien pertama Anda untuk mulai membuat dokumen."
-                : "Tidak ada klien yang cocok dengan pencarian."
-            }
-            action={
-              clients.length === 0
-                ? { label: "Tambah Klien", onClick: openCreate, icon: Plus }
-                : undefined
-            }
-          />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nama</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Telepon</TableHead>
-                <TableHead>NPWP</TableHead>
-                <TableHead className="w-24"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-medium">{c.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.email || "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.phone || "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.npwp || "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={async () => {
-                          const ok = await confirm({
-                            title: "Hapus klien?",
-                            description: `${c.name} akan dihapus. Dokumen terkait tetap ada tapi tanpa data klien.`,
-                            confirmLabel: "Hapus",
-                            destructive: true,
-                          });
-                          if (ok) deleteMutation.mutate(c.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="p-4">
+            <DataTable
+              data={filtered}
+              rowKey={(c) => c.id}
+              initialSort={{ columnId: "name", direction: "asc" }}
+              empty={
+                <EmptyState
+                  icon={Users}
+                  title="Belum ada klien"
+                  description={
+                    clients.length === 0
+                      ? "Tambah klien pertama Anda untuk mulai membuat dokumen."
+                      : "Tidak ada klien yang cocok dengan pencarian."
+                  }
+                  action={
+                    clients.length === 0
+                      ? { label: "Tambah Klien", onClick: openCreate, icon: Plus }
+                      : undefined
+                  }
+                />
+              }
+              columns={
+                [
+                  {
+                    id: "name",
+                    header: "Nama",
+                    sortBy: (c) => c.name,
+                    cell: (c) => <span className="font-medium">{c.name}</span>,
+                  },
+                  {
+                    id: "email",
+                    header: "Email",
+                    sortBy: (c) => c.email ?? "",
+                    cell: (c) => (
+                      <span className="text-muted-foreground">{c.email || "—"}</span>
+                    ),
+                  },
+                  {
+                    id: "phone",
+                    header: "Telepon",
+                    cell: (c) => (
+                      <span className="text-muted-foreground">{c.phone || "—"}</span>
+                    ),
+                  },
+                  {
+                    id: "npwp",
+                    header: "NPWP",
+                    cell: (c) => (
+                      <span className="text-muted-foreground">{c.npwp || "—"}</span>
+                    ),
+                  },
+                  {
+                    id: "actions",
+                    header: "",
+                    headerClassName: "w-24",
+                    cell: (c) => (
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: "Hapus klien?",
+                              description: `${c.name} akan dihapus. Dokumen terkait tetap ada tapi tanpa data klien.`,
+                              confirmLabel: "Hapus",
+                              destructive: true,
+                            });
+                            if (ok) deleteMutation.mutate(c.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ),
+                  },
+                ] satisfies DataTableColumn<Client>[]
+              }
+            />
+          </div>
         )}
       </Card>
 

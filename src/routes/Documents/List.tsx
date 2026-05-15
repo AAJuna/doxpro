@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useConfirm } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -185,108 +185,131 @@ export function DocumentsList() {
         </Select>
       </div>
 
-      <Card>
+      <Card className="p-4">
         {isLoading ? (
-          <div className="space-y-2 p-4">
+          <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            icon={FileText}
-            title="Belum ada dokumen"
-            description={
-              docs.length === 0
-                ? "Buat dokumen pertama Anda untuk mulai."
-                : "Tidak ada dokumen yang cocok dengan filter saat ini."
+        ) : (
+          <DataTable
+            data={filtered}
+            rowKey={(d) => d.id}
+            onRowClick={(d) => navigate(`/documents/${d.id}`)}
+            initialSort={{ columnId: "date", direction: "desc" }}
+            empty={
+              <EmptyState
+                icon={FileText}
+                title="Belum ada dokumen"
+                description={
+                  docs.length === 0
+                    ? "Buat dokumen pertama Anda untuk mulai."
+                    : "Tidak ada dokumen yang cocok dengan filter saat ini."
+                }
+                action={
+                  docs.length === 0
+                    ? {
+                        label: "Buat Invoice Pertama",
+                        onClick: () => navigate("/documents/new/invoice"),
+                        icon: Plus,
+                      }
+                    : undefined
+                }
+              />
             }
-            action={
-              docs.length === 0
-                ? {
-                    label: "Buat Invoice Pertama",
-                    onClick: () => navigate("/documents/new/invoice"),
-                    icon: Plus,
-                  }
-                : undefined
+            columns={
+              [
+                {
+                  id: "number",
+                  header: "Nomor",
+                  sortBy: (d) => d.number,
+                  cell: (d) => <span className="font-medium">{d.number}</span>,
+                },
+                {
+                  id: "type",
+                  header: "Tipe",
+                  sortBy: (d) => d.type,
+                  cell: (d) => typeLabel[d.type],
+                },
+                {
+                  id: "client",
+                  header: "Klien",
+                  sortBy: (d) => clients.find((c) => c.id === d.clientId)?.name ?? "",
+                  cell: (d) => clients.find((c) => c.id === d.clientId)?.name ?? "—",
+                },
+                {
+                  id: "date",
+                  header: "Tanggal",
+                  sortBy: (d) => d.date,
+                  cell: (d) => (
+                    <span className="text-muted-foreground">{formatDateShort(d.date)}</span>
+                  ),
+                },
+                {
+                  id: "status",
+                  header: "Status",
+                  sortBy: (d) => d.status,
+                  cell: (d) => {
+                    const badge = statusBadge[d.status];
+                    return <Badge variant={badge.variant}>{badge.label}</Badge>;
+                  },
+                },
+                {
+                  id: "total",
+                  header: "Total",
+                  sortBy: (d) => d.totals.grandTotal,
+                  headerClassName: "text-right",
+                  className: "text-right font-medium",
+                  cell: (d) => formatCurrency(d.totals.grandTotal),
+                },
+                {
+                  id: "actions",
+                  header: "",
+                  headerClassName: "w-32",
+                  cell: (d) => (
+                    <div
+                      className="flex gap-1 justify-end"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => downloadPdf(d)}
+                        title="Unduh PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => duplicate(d)}
+                        title="Duplikat"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: "Hapus dokumen?",
+                            description: `Dokumen ${d.number} akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.`,
+                            confirmLabel: "Hapus",
+                            destructive: true,
+                          });
+                          if (ok) deleteMutation.mutate(d.id);
+                        }}
+                        title="Hapus"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ),
+                },
+              ] satisfies DataTableColumn<DocumentRecord>[]
             }
           />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nomor</TableHead>
-                <TableHead>Tipe</TableHead>
-                <TableHead>Klien</TableHead>
-                <TableHead>Tanggal</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="w-32"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((d) => {
-                const client = clients.find((c) => c.id === d.clientId);
-                const badge = statusBadge[d.status];
-                return (
-                  <TableRow
-                    key={d.id}
-                    className="cursor-pointer"
-                    onClick={() => navigate(`/documents/${d.id}`)}
-                  >
-                    <TableCell className="font-medium">{d.number}</TableCell>
-                    <TableCell>{typeLabel[d.type]}</TableCell>
-                    <TableCell>{client?.name ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDateShort(d.date)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={badge.variant}>{badge.label}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(d.totals.grandTotal)}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-1 justify-end">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => downloadPdf(d)}
-                          title="Unduh PDF"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => duplicate(d)}
-                          title="Duplikat"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={async () => {
-                            const ok = await confirm({
-                              title: "Hapus dokumen?",
-                              description: `Dokumen ${d.number} akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.`,
-                              confirmLabel: "Hapus",
-                              destructive: true,
-                            });
-                            if (ok) deleteMutation.mutate(d.id);
-                          }}
-                          title="Hapus"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
         )}
       </Card>
       {confirmDialog}

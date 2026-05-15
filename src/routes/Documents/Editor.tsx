@@ -22,6 +22,7 @@ import { ItemsTable } from "@/components/document-editor/ItemsTable";
 import { TemplatePicker } from "@/components/document-editor/TemplatePicker";
 import { PdfPreview } from "@/components/document-preview/PdfPreview";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   getDocument,
   saveDocument,
@@ -299,10 +300,9 @@ export function DocumentEditor() {
                     </div>
                     <div className="space-y-2">
                       <Label>Tanggal</Label>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={doc.date}
-                        onChange={(e) => updateDoc({ date: e.target.value })}
+                        onChange={(v) => updateDoc({ date: v ?? "" })}
                       />
                     </div>
                   </div>
@@ -310,10 +310,10 @@ export function DocumentEditor() {
                   {(doc.type === "penawaran" || doc.type === "proposal") && (
                     <div className="space-y-2">
                       <Label>Berlaku Sampai</Label>
-                      <Input
-                        type="date"
-                        value={doc.validUntil ?? ""}
-                        onChange={(e) => updateDoc({ validUntil: e.target.value })}
+                      <DatePicker
+                        value={doc.validUntil}
+                        onChange={(v) => updateDoc({ validUntil: v })}
+                        placeholder="Pilih tanggal berakhir"
                       />
                     </div>
                   )}
@@ -321,10 +321,10 @@ export function DocumentEditor() {
                   {doc.type === "invoice" && (
                     <div className="space-y-2">
                       <Label>Jatuh Tempo</Label>
-                      <Input
-                        type="date"
-                        value={doc.dueDate ?? ""}
-                        onChange={(e) => updateDoc({ dueDate: e.target.value })}
+                      <DatePicker
+                        value={doc.dueDate}
+                        onChange={(v) => updateDoc({ dueDate: v })}
+                        placeholder="Pilih jatuh tempo"
                       />
                     </div>
                   )}
