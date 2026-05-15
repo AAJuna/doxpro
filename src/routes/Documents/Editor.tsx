@@ -2,6 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, Download, FileText } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ItemsTable } from "@/components/document-editor/ItemsTable";
 import { TemplatePicker } from "@/components/document-editor/TemplatePicker";
 import { PdfPreview } from "@/components/document-preview/PdfPreview";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getDocument,
   saveDocument,
@@ -163,8 +172,20 @@ export function DocumentEditor() {
 
   if (!doc) {
     return (
-      <div className="flex h-full items-center justify-center text-muted-foreground">
-        Memuat editor...
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between border-b bg-card px-6 py-3">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-9 w-32" />
+        </div>
+        <div className="grid flex-1 grid-cols-2 gap-4 p-6">
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <Skeleton className="h-full w-full" />
+        </div>
       </div>
     );
   }
@@ -218,9 +239,23 @@ export function DocumentEditor() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-lg font-semibold">
-              {docTitle[doc.type]} · {doc.number}
-            </h1>
+            <Breadcrumb className="mb-0.5">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink onClick={() => navigate("/documents")}>Dokumen</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink onClick={() => navigate(`/documents?type=${doc.type}`)}>
+                    {docTitle[doc.type]}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{doc.number}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
             <p className="text-xs text-muted-foreground">
               Total: {formatCurrency(doc.totals.grandTotal)} · Status: {doc.status}
             </p>

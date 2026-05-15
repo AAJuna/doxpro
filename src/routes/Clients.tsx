@@ -20,6 +20,9 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { clientSchema, type ClientInput } from "@/lib/validators";
 import { listClients, saveClient, deleteClient } from "@/lib/db/queries";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Client } from "@/types";
 
 export function Clients() {
@@ -27,6 +30,7 @@ export function Clients() {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
@@ -119,18 +123,26 @@ export function Clients() {
 
       <Card>
         {isLoading ? (
-          <div className="p-12 text-center text-muted-foreground">Memuat...</div>
-        ) : filtered.length === 0 ? (
-          <div className="p-12 text-center">
-            <Users className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-            <p className="font-medium">Belum ada klien</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Tambah klien pertama Anda untuk mulai membuat dokumen
-            </p>
-            <Button onClick={openCreate} className="mt-4" size="sm">
-              <Plus className="h-4 w-4" /> Tambah Klien
-            </Button>
+          <div className="space-y-2 p-4">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
           </div>
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="Belum ada klien"
+            description={
+              clients.length === 0
+                ? "Tambah klien pertama Anda untuk mulai membuat dokumen."
+                : "Tidak ada klien yang cocok dengan pencarian."
+            }
+            action={
+              clients.length === 0
+                ? { label: "Tambah Klien", onClick: openCreate, icon: Plus }
+                : undefined
+            }
+          />
         ) : (
           <Table>
             <TableHeader>
@@ -157,8 +169,14 @@ export function Clients() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => {
-                          if (confirm("Hapus klien " + c.name + "?")) deleteMutation.mutate(c.id);
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: "Hapus klien?",
+                            description: `${c.name} akan dihapus. Dokumen terkait tetap ada tapi tanpa data klien.`,
+                            confirmLabel: "Hapus",
+                            destructive: true,
+                          });
+                          if (ok) deleteMutation.mutate(c.id);
                         }}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -171,6 +189,8 @@ export function Clients() {
           </Table>
         )}
       </Card>
+
+      {confirmDialog}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">

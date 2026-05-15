@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { CommandPalette } from "@/components/CommandPalette";
+import { ShortcutsDialog } from "@/components/ShortcutsDialog";
 
 export function AppShell() {
   return (
@@ -14,6 +15,7 @@ export function AppShell() {
         </main>
       </div>
       <CommandPalette />
+      <ShortcutsDialog />
     </div>
   );
 }

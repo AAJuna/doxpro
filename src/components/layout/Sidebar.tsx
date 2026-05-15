@@ -9,8 +9,9 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NavItem {
   to: string;
@@ -28,7 +29,8 @@ const navItems: NavItem[] = [
 ];
 
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = useAppStore((s) => s.sidebarCollapsed);
+  const setCollapsed = useAppStore((s) => s.setSidebarCollapsed);
 
   return (
     <aside
@@ -56,25 +58,34 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 p-2">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === "/"}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                collapsed && "justify-center px-2",
-              )
-            }
-          >
-            <item.icon className="h-4 w-4 flex-shrink-0" />
-            {!collapsed && <span>{item.label}</span>}
-          </NavLink>
-        ))}
+        {navItems.map((item) => {
+          const link = (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  collapsed && "justify-center px-2",
+                )
+              }
+            >
+              <item.icon className="h-4 w-4 flex-shrink-0" />
+              {!collapsed && <span>{item.label}</span>}
+            </NavLink>
+          );
+          if (!collapsed) return link;
+          return (
+            <Tooltip key={item.to}>
+              <TooltipTrigger asChild>{link}</TooltipTrigger>
+              <TooltipContent side="right">{item.label}</TooltipContent>
+            </Tooltip>
+          );
+        })}
       </nav>
 
       <div className="border-t p-3">

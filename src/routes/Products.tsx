@@ -21,6 +21,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { productSchema, type ProductInput } from "@/lib/validators";
 import { listProducts, saveProduct, deleteProduct } from "@/lib/db/queries";
 import { formatCurrency } from "@/lib/format";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Product } from "@/types";
 
 export function Products() {
@@ -28,6 +31,7 @@ export function Products() {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
@@ -106,18 +110,26 @@ export function Products() {
 
       <Card>
         {isLoading ? (
-          <div className="p-12 text-center text-muted-foreground">Memuat...</div>
-        ) : filtered.length === 0 ? (
-          <div className="p-12 text-center">
-            <Package className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-            <p className="font-medium">Belum ada produk/jasa</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Tambah item agar bisa diambil otomatis saat buat dokumen
-            </p>
-            <Button onClick={openCreate} className="mt-4" size="sm">
-              <Plus className="h-4 w-4" /> Tambah Item
-            </Button>
+          <div className="space-y-2 p-4">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
           </div>
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={Package}
+            title="Belum ada produk/jasa"
+            description={
+              products.length === 0
+                ? "Tambah item agar bisa diambil otomatis saat buat dokumen."
+                : "Tidak ada produk yang cocok dengan pencarian."
+            }
+            action={
+              products.length === 0
+                ? { label: "Tambah Item", onClick: openCreate, icon: Plus }
+                : undefined
+            }
+          />
         ) : (
           <Table>
             <TableHeader>
@@ -148,8 +160,14 @@ export function Products() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => {
-                          if (confirm("Hapus " + p.name + "?")) deleteMutation.mutate(p.id);
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: "Hapus produk?",
+                            description: `${p.name} akan dihapus dari katalog.`,
+                            confirmLabel: "Hapus",
+                            destructive: true,
+                          });
+                          if (ok) deleteMutation.mutate(p.id);
                         }}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -162,6 +180,8 @@ export function Products() {
           </Table>
         )}
       </Card>
+
+      {confirmDialog}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

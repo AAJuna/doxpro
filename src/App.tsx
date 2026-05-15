@@ -37,7 +37,10 @@ export function App() {
   if (!ready) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-muted-foreground text-sm">Memuat doxpro...</div>
+        <div className="flex items-center gap-3">
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-muted border-t-primary" />
+          <span className="text-muted-foreground text-sm">Memuat doxpro...</span>
+        </div>
       </div>
     );
   }

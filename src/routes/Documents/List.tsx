@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   DropdownMenu,
@@ -54,6 +58,8 @@ export function DocumentsList() {
   const settings = useAppStore((s) => s.settings);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | DocumentType>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | DocumentStatus>("all");
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ["documents"],
@@ -72,6 +78,7 @@ export function DocumentsList() {
 
   const filtered = docs.filter((d) => {
     if (filter !== "all" && d.type !== filter) return false;
+    if (statusFilter !== "all" && d.status !== statusFilter) return false;
     const client = clients.find((c) => c.id === d.clientId);
     const q = search.toLowerCase();
     return (
@@ -158,19 +165,52 @@ export function DocumentsList() {
             <TabsTrigger value="proposal">Proposal</TabsTrigger>
           </TabsList>
         </Tabs>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v as "all" | DocumentStatus)}
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua status</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="sent">Terkirim</SelectItem>
+            <SelectItem value="paid">Lunas</SelectItem>
+            <SelectItem value="overdue">Jatuh Tempo</SelectItem>
+            <SelectItem value="accepted">Diterima</SelectItem>
+            <SelectItem value="rejected">Ditolak</SelectItem>
+            <SelectItem value="cancelled">Dibatalkan</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
         {isLoading ? (
-          <div className="p-12 text-center text-muted-foreground">Memuat...</div>
-        ) : filtered.length === 0 ? (
-          <div className="p-12 text-center">
-            <FileText className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-            <p className="font-medium">Belum ada dokumen</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Buat dokumen pertama Anda untuk mulai
-            </p>
+          <div className="space-y-2 p-4">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
           </div>
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="Belum ada dokumen"
+            description={
+              docs.length === 0
+                ? "Buat dokumen pertama Anda untuk mulai."
+                : "Tidak ada dokumen yang cocok dengan filter saat ini."
+            }
+            action={
+              docs.length === 0
+                ? {
+                    label: "Buat Invoice Pertama",
+                    onClick: () => navigate("/documents/new/invoice"),
+                    icon: Plus,
+                  }
+                : undefined
+            }
+          />
         ) : (
           <Table>
             <TableHeader>
@@ -227,9 +267,14 @@ export function DocumentsList() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => {
-                            if (confirm("Hapus dokumen " + d.number + "?"))
-                              deleteMutation.mutate(d.id);
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: "Hapus dokumen?",
+                              description: `Dokumen ${d.number} akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.`,
+                              confirmLabel: "Hapus",
+                              destructive: true,
+                            });
+                            if (ok) deleteMutation.mutate(d.id);
                           }}
                           title="Hapus"
                         >
@@ -244,6 +289,7 @@ export function DocumentsList() {
           </Table>
         )}
       </Card>
+      {confirmDialog}
     </div>
   );
 }
