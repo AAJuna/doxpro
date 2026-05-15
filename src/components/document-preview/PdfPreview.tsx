@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { BlobProvider } from "@react-pdf/renderer";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -51,12 +51,26 @@ const LOGO_POSITIONS: { id: LogoPosition; Icon: typeof AlignLeft }[] = [
 ];
 
 const A4_WIDTH_PT = 595; // base PDF width in points
+const A4_HEIGHT_PT = 842;
 
 export function PdfPreview({ doc, company, client, signature, onCustomizationsChange }: Props) {
   const [zoom, setZoom] = useState(100);
   const [logoPanel, setLogoPanel] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [numPages, setNumPages] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const fitHeight = () => {
+    const el = scrollRef.current;
+    if (!el) {
+      setZoom(100);
+      return;
+    }
+    // Account for vertical padding (16px each side)
+    const available = el.clientHeight - 32;
+    const next = Math.max(50, Math.min(200, Math.round((available / A4_HEIGHT_PT) * 100)));
+    setZoom(next);
+  };
 
   // Memoize the JSX so BlobProvider only re-renders blob when doc/company/client/signature changes
   const pdfDoc = useMemo(
@@ -173,9 +187,9 @@ export function PdfPreview({ doc, company, client, signature, onCustomizationsCh
             size="icon"
             variant="ghost"
             className="h-7 w-7"
-            onClick={() => setZoom(100)}
-            aria-label="Fit"
-            title="Fit"
+            onClick={fitHeight}
+            aria-label="Fit Height"
+            title="Fit ke tinggi viewport"
           >
             <Maximize2 className="h-3.5 w-3.5" />
           </Button>
@@ -233,7 +247,10 @@ export function PdfPreview({ doc, company, client, signature, onCustomizationsCh
         </div>
       )}
 
-      <div className="flex-1 overflow-auto bg-secondary/30 p-4 flex justify-center">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-auto bg-secondary/30 p-4 flex justify-center"
+      >
         <BlobProvider document={pdfDoc}>
           {({ url, loading, error }) => {
             if (error) {
