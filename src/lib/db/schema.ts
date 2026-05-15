@@ -99,6 +99,12 @@ export const settings = sqliteTable("settings", {
   value: text("value").notNull(),
 });
 
+export const documentSequences = sqliteTable("document_sequences", {
+  type: text("type").notNull(),
+  yearMonth: text("year_month").notNull(),
+  nextSeq: integer("next_seq").notNull().default(0),
+});
+
 export const syncLog = sqliteTable("sync_log", {
   id: text("id").primaryKey(),
   entityType: text("entity_type").notNull(),

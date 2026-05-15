@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -11,10 +12,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { companySchema, type CompanyInput } from "@/lib/validators";
 import { saveCompany } from "@/lib/db/queries";
 import { useAppStore } from "@/store/useAppStore";
 import { LogoUpload } from "@/components/LogoUpload";
+import { downloadBackup, readBackupFile, importBackup } from "@/lib/backup";
 
 export function Settings() {
   const company = useAppStore((s) => s.company)!;
@@ -34,6 +45,63 @@ export function Settings() {
       toast.success("Pengaturan tersimpan");
     } catch (e) {
       toast.error("Gagal menyimpan: " + String(e));
+    }
+  };
+
+  // ---- Backup state ----
+  const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [exportPassword, setExportPassword] = useState("");
+  const [exportPasswordConfirm, setExportPasswordConfirm] = useState("");
+  const [importPassword, setImportPassword] = useState("");
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = async () => {
+    if (exportPassword.length < 8) {
+      toast.error("Password minimal 8 karakter");
+      return;
+    }
+    if (exportPassword !== exportPasswordConfirm) {
+      toast.error("Konfirmasi password tidak cocok");
+      return;
+    }
+    setBusy(true);
+    try {
+      await downloadBackup(exportPassword);
+      toast.success("Backup terenkripsi diunduh");
+      setExportOpen(false);
+      setExportPassword("");
+      setExportPasswordConfirm("");
+    } catch (e) {
+      toast.error("Gagal export: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      toast.error("Pilih file backup terlebih dahulu");
+      return;
+    }
+    if (!importPassword) {
+      toast.error("Masukkan password");
+      return;
+    }
+    setBusy(true);
+    try {
+      const data = await readBackupFile(importFile, importPassword);
+      await importBackup(data);
+      toast.success("Data berhasil di-restore");
+      setImportOpen(false);
+      setImportPassword("");
+      setImportFile(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -221,31 +289,33 @@ export function Settings() {
         <TabsContent value="cloud">
           <Card>
             <CardHeader>
-              <CardTitle>Cloud Sync</CardTitle>
-              <CardDescription>Sinkronisasi data ke Supabase untuk multi-device.</CardDescription>
+              <div className="flex items-center gap-2">
+                <CardTitle>Cloud Sync</CardTitle>
+                <Badge variant="secondary">Coming Soon</Badge>
+              </div>
+              <CardDescription>
+                Sinkronisasi data multi-device sedang dalam pengembangan. Data Anda saat ini
+                tersimpan aman di komputer ini saja.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="rounded-lg border border-dashed bg-secondary/40 p-4 text-sm text-muted-foreground">
+                <p className="mb-2">
+                  Fitur sync 2-arah, login magic link, dan resolusi konflik akan tersedia pada rilis
+                  berikutnya. Sementara waktu, gunakan <b>Backup &amp; Restore</b> untuk memindahkan
+                  data antar device.
+                </p>
+                <p className="text-xs">
+                  Ingin jadi beta tester saat fitur ini siap? Kabari kami lewat website doxpro.id.
+                </p>
+              </div>
+              <div className="flex items-center justify-between opacity-50">
                 <div>
                   <Label>Aktifkan Cloud Sync</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Login dengan magic link, data sinkron otomatis.
-                  </p>
+                  <p className="text-xs text-muted-foreground">Belum tersedia.</p>
                 </div>
-                <Switch
-                  checked={settings.cloudSyncEnabled}
-                  onCheckedChange={(v) => setSettings({ cloudSyncEnabled: v })}
-                />
+                <Switch checked={false} disabled />
               </div>
-              {settings.cloudSyncEnabled && (
-                <div className="rounded-lg border bg-secondary/40 p-4 text-sm">
-                  <p className="font-medium mb-1">Konfigurasi Supabase</p>
-                  <p className="text-muted-foreground text-xs mb-3">
-                    Atur VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY di file .env, lalu restart aplikasi.
-                  </p>
-                  <Button variant="outline" size="sm">Login dengan Email</Button>
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -267,14 +337,102 @@ export function Settings() {
                   onCheckedChange={(v) => setSettings({ autoBackupEnabled: v })}
                 />
               </div>
+              <div className="rounded-lg border bg-secondary/40 p-3 text-xs text-muted-foreground">
+                Backup dienkripsi end-to-end dengan AES-256-GCM. Password tidak disimpan di mana pun
+                — kalau lupa, file tidak bisa dibuka kembali.
+              </div>
               <div className="flex gap-2">
-                <Button variant="outline">Export Backup Sekarang</Button>
-                <Button variant="outline">Import dari File</Button>
+                <Button variant="outline" onClick={() => setExportOpen(true)}>
+                  Export Backup Sekarang
+                </Button>
+                <Button variant="outline" onClick={() => setImportOpen(true)}>
+                  Import dari File
+                </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Export Backup Terenkripsi</DialogTitle>
+            <DialogDescription>
+              Buat password untuk mengenkripsi file. Simpan baik-baik — tanpa password, file tidak
+              bisa dibuka.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-2">
+              <Label>Password (min. 8 karakter)</Label>
+              <Input
+                type="password"
+                value={exportPassword}
+                onChange={(e) => setExportPassword(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Konfirmasi Password</Label>
+              <Input
+                type="password"
+                value={exportPasswordConfirm}
+                onChange={(e) => setExportPasswordConfirm(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setExportOpen(false)} disabled={busy}>
+              Batal
+            </Button>
+            <Button onClick={handleExport} disabled={busy}>
+              {busy ? "Mengenkripsi..." : "Download"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import Backup</DialogTitle>
+            <DialogDescription>
+              Pilih file backup (.dxbk) dan masukkan password yang digunakan saat export.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-2">
+              <Label>File Backup</Label>
+              <Input
+                ref={importInputRef}
+                type="file"
+                accept=".dxbk,.json,application/json,application/octet-stream"
+                onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <Input
+                type="password"
+                value={importPassword}
+                onChange={(e) => setImportPassword(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Data yang ada akan digabung dengan data dari file backup.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setImportOpen(false)} disabled={busy}>
+              Batal
+            </Button>
+            <Button onClick={handleImport} disabled={busy}>
+              {busy ? "Memuat..." : "Restore"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
