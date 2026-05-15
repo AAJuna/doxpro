@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X } from "lucide-react";
+import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { seedSampleData } from "@/lib/seed";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import {
   DropdownMenu,
@@ -56,13 +57,34 @@ const typeLabel: Record<DocumentType, string> = {
 export function DocumentsList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const settings = useAppStore((s) => s.settings);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | DocumentType>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | DocumentStatus>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const [seeding, setSeeding] = useState(false);
   const { confirm, dialog: confirmDialog } = useConfirm();
+  const { settings, company } = useAppStore((s) => ({ settings: s.settings, company: s.company }));
+
+  const handleSeed = async () => {
+    if (!company) return;
+    setSeeding(true);
+    try {
+      const summary = await seedSampleData(settings, company.defaultColor, company.defaultFont);
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success(
+        summary.documents > 0
+          ? `${summary.documents} dokumen contoh ditambahkan`
+          : "Data contoh sudah lengkap",
+      );
+    } catch (e) {
+      toast.error("Gagal: " + String(e));
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ["documents"],
@@ -312,24 +334,32 @@ export function DocumentsList() {
               onSelectionChange: setSelectedIds,
             }}
             empty={
-              <EmptyState
-                icon={FileText}
-                title="Belum ada dokumen"
-                description={
-                  docs.length === 0
-                    ? "Buat dokumen pertama Anda untuk mulai."
-                    : "Tidak ada dokumen yang cocok dengan filter saat ini."
-                }
-                action={
-                  docs.length === 0
-                    ? {
-                        label: "Buat Invoice Pertama",
-                        onClick: () => navigate("/documents/new/invoice"),
-                        icon: Plus,
-                      }
-                    : undefined
-                }
-              />
+              <div className="flex flex-col items-center gap-3 py-2">
+                <EmptyState
+                  icon={FileText}
+                  title="Belum ada dokumen"
+                  description={
+                    docs.length === 0
+                      ? "Buat dokumen pertama Anda untuk mulai, atau coba data contoh."
+                      : "Tidak ada dokumen yang cocok dengan filter saat ini."
+                  }
+                  action={
+                    docs.length === 0
+                      ? {
+                          label: "Buat Invoice Pertama",
+                          onClick: () => navigate("/documents/new/invoice"),
+                          icon: Plus,
+                        }
+                      : undefined
+                  }
+                />
+                {docs.length === 0 ? (
+                  <Button variant="ghost" size="sm" onClick={handleSeed} disabled={seeding}>
+                    <Sparkles className="h-4 w-4" />{" "}
+                    {seeding ? "Mengisi..." : "Isi Data Contoh"}
+                  </Button>
+                ) : null}
+              </div>
             }
             columns={
               [

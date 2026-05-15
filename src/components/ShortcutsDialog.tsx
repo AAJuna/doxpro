@@ -20,6 +20,12 @@ const SHORTCUTS: Array<{ group: string; items: Array<{ keys: string[]; label: st
     ],
   },
   {
+    group: "Aksi",
+    items: [
+      { keys: [cmd, "N"], label: "Invoice baru" },
+    ],
+  },
+  {
     group: "Editor Dokumen",
     items: [
       { keys: [cmd, "S"], label: "Simpan dokumen" },

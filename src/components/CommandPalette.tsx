@@ -37,11 +37,18 @@ export function CommandPalette() {
       if ((e.key === "k" || e.key === "K") && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         setOpen((o) => !o);
+        return;
+      }
+      if ((e.key === "n" || e.key === "N") && (e.ctrlKey || e.metaKey)) {
+        // Ctrl+N → buat invoice baru (jenis paling umum)
+        e.preventDefault();
+        setOpen(false);
+        navigate("/documents/new/invoice");
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [navigate]);
 
   const run = (fn: () => void) => () => {
     setOpen(false);

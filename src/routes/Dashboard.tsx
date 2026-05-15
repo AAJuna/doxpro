@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { FileText, Plus, TrendingUp, AlertCircle, Users, DollarSign, Clock } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { FileText, Plus, TrendingUp, AlertCircle, Users, DollarSign, Clock, Sparkles } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -16,13 +18,36 @@ import { Badge } from "@/components/ui/badge";
 import { listDocuments, listClients } from "@/lib/db/queries";
 import { formatCurrency, formatDateShort } from "@/lib/format";
 import { useAppStore } from "@/store/useAppStore";
+import { seedSampleData } from "@/lib/seed";
 
 export function Dashboard() {
   const navigate = useNavigate();
   const company = useAppStore((s) => s.company)!;
+  const settings = useAppStore((s) => s.settings);
+  const queryClient = useQueryClient();
+  const [seeding, setSeeding] = useState(false);
 
   const { data: docs = [] } = useQuery({ queryKey: ["documents"], queryFn: () => listDocuments() });
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: listClients });
+
+  const handleSeed = async () => {
+    setSeeding(true);
+    try {
+      const summary = await seedSampleData(settings, company.defaultColor, company.defaultFont);
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      const parts: string[] = [];
+      if (summary.clients > 0) parts.push(`${summary.clients} klien`);
+      if (summary.products > 0) parts.push(`${summary.products} produk`);
+      if (summary.documents > 0) parts.push(`${summary.documents} dokumen`);
+      toast.success(parts.length > 0 ? `Data contoh ditambahkan: ${parts.join(", ")}` : "Data contoh sudah lengkap");
+    } catch (e) {
+      toast.error("Gagal seed: " + String(e));
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const now = new Date();
   const thisMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
@@ -267,15 +292,27 @@ export function Dashboard() {
         </CardHeader>
         <CardContent>
           {recent.length === 0 ? (
-            <div className="text-center py-8 text-sm text-muted-foreground">
-              Belum ada dokumen.{" "}
-              <button
-                className="underline"
-                onClick={() => navigate("/documents/new/invoice")}
-              >
-                Buat invoice pertama
-              </button>
-              .
+            <div className="text-center py-8">
+              <p className="text-sm text-muted-foreground">
+                Belum ada dokumen. Mulai dengan buat invoice pertama, atau coba data contoh dulu.
+              </p>
+              <div className="mt-4 flex justify-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => navigate("/documents/new/invoice")}
+                >
+                  <Plus className="h-4 w-4" /> Buat Invoice
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSeed}
+                  disabled={seeding}
+                >
+                  <Sparkles className="h-4 w-4" />{" "}
+                  {seeding ? "Mengisi..." : "Isi Data Contoh"}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
