@@ -101,6 +101,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   proposalBody: { fontSize: 10, lineHeight: 1.5, color: "#334155" },
+  intro: {
+    marginTop: 4,
+    marginBottom: 12,
+    fontSize: 10,
+    lineHeight: 1.5,
+    color: "#334155",
+  },
+  closing: {
+    marginTop: 16,
+    fontSize: 10,
+    lineHeight: 1.5,
+    color: "#334155",
+  },
   validityCallout: {
     marginTop: 16,
     padding: 12,
@@ -277,6 +290,14 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
           </View>
         )}
 
+        {doc.type === "penawaran" && (
+          <Text style={styles.intro}>
+            Dengan hormat,{"\n\n"}
+            Sehubungan dengan permintaan penawaran harga, dengan ini kami sampaikan penawaran
+            untuk produk/jasa berikut:
+          </Text>
+        )}
+
         {(doc.type === "penawaran" || doc.type === "invoice") && (
           <View style={styles.table}>
             <View style={[styles.tableHeader, { borderBottomColor: accent }]}>
@@ -367,6 +388,22 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
             <Text style={styles.notesLabel}>Syarat & Ketentuan</Text>
             <Text style={styles.notesText}>{doc.termsText}</Text>
           </View>
+        )}
+
+        {doc.type === "penawaran" && (
+          <Text style={styles.closing}>
+            Demikian penawaran ini kami sampaikan. Apabila ada pertanyaan atau memerlukan
+            penyesuaian, silakan menghubungi kami. Atas perhatian dan kerja samanya, kami
+            ucapkan terima kasih.
+          </Text>
+        )}
+
+        {doc.type === "invoice" && (
+          <Text style={styles.closing}>
+            Mohon pembayaran dilakukan paling lambat tanggal jatuh tempo di atas. Konfirmasi
+            pembayaran dapat dikirim ke email atau WhatsApp kami. Terima kasih atas kerja
+            samanya.
+          </Text>
         )}
 
         <View style={styles.signatureArea}>

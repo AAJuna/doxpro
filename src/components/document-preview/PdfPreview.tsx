@@ -3,11 +3,8 @@ import { BlobProvider } from "@react-pdf/renderer";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
-// Worker URL via Vite-friendly new URL pattern
-const workerUrl = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url,
-).toString();
+// Worker disajikan dari public/ jadi tidak butuh resolve bundler
+const workerUrl = "/pdf.worker.min.mjs";
 import {
   ZoomIn,
   ZoomOut,

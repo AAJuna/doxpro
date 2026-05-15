@@ -94,6 +94,8 @@ const styles = StyleSheet.create({
   pSection: { marginTop: 8 },
   pHeading: { fontSize: 10, fontWeight: 700, marginBottom: 2 },
   pBody: { fontSize: 9, lineHeight: 1.4, color: "#444" },
+  intro: { fontSize: 9, lineHeight: 1.5, marginTop: 4, marginBottom: 6, color: "#444" },
+  closing: { fontSize: 9, lineHeight: 1.5, marginTop: 12, color: "#444" },
   validityNote: {
     marginTop: 8,
     paddingHorizontal: 8,
@@ -206,6 +208,12 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
           </View>
         )}
 
+        {doc.type === "penawaran" && (
+          <Text style={styles.intro}>
+            Dengan hormat, berikut penawaran harga untuk produk/jasa di bawah ini:
+          </Text>
+        )}
+
         {(doc.type === "penawaran" || doc.type === "invoice") && (
           <View style={styles.table}>
             <View style={[styles.tableHeader, { borderBottomColor: accent }]}>
@@ -279,6 +287,19 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
           <Text style={styles.smallNote}>
             {doc.notes ? "Catatan: " + doc.notes + "\n" : ""}
             {doc.termsText ? "S&K: " + doc.termsText : ""}
+          </Text>
+        )}
+
+        {doc.type === "penawaran" && (
+          <Text style={styles.closing}>
+            Demikian penawaran ini kami sampaikan. Atas perhatian dan kerja samanya, terima kasih.
+          </Text>
+        )}
+
+        {doc.type === "invoice" && (
+          <Text style={styles.closing}>
+            Mohon pembayaran sesuai jatuh tempo. Konfirmasi pembayaran via email/WhatsApp.
+            Terima kasih.
           </Text>
         )}
 

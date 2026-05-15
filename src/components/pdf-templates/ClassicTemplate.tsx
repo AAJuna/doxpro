@@ -105,6 +105,8 @@ const styles = StyleSheet.create({
   },
   proposalDivider: { borderBottomWidth: 0.5, marginBottom: 6 },
   proposalBody: { fontSize: 10, lineHeight: 1.5 },
+  intro: { marginTop: 6, marginBottom: 12, fontSize: 11, lineHeight: 1.6, textAlign: "justify" },
+  closing: { marginTop: 16, fontSize: 11, lineHeight: 1.6, textAlign: "justify" },
   validityCallout: {
     marginTop: 14,
     padding: 10,
@@ -257,6 +259,14 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
                 </View>
               );
             })() : (
+              <>
+                {doc.type === "penawaran" && (
+                  <Text style={styles.intro}>
+                    Dengan hormat,{"\n\n"}
+                    Sehubungan dengan permintaan penawaran harga, dengan ini kami sampaikan
+                    penawaran untuk produk/jasa berikut:
+                  </Text>
+                )}
               <View style={styles.table}>
                 <View style={styles.tableHeader}>
                   <Text style={[styles.tableHeaderText, styles.cellNo]}>No</Text>
@@ -280,6 +290,7 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
                   </View>
                 ))}
               </View>
+              </>
             )}
 
             {doc.type !== "proposal" && (
@@ -342,6 +353,22 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
             <Text style={styles.notesLabel}>Syarat & Ketentuan:</Text>
             <Text style={styles.notesText}>{doc.termsText}</Text>
           </View>
+        )}
+
+        {doc.type === "penawaran" && (
+          <Text style={styles.closing}>
+            Demikian penawaran ini kami sampaikan. Apabila ada pertanyaan atau memerlukan
+            penyesuaian, silakan menghubungi kami. Atas perhatian dan kerja samanya, kami
+            ucapkan terima kasih.
+          </Text>
+        )}
+
+        {doc.type === "invoice" && (
+          <Text style={styles.closing}>
+            Mohon pembayaran dilakukan paling lambat tanggal jatuh tempo di atas. Konfirmasi
+            pembayaran dapat dikirim ke email atau WhatsApp kami. Terima kasih atas kerja
+            samanya.
+          </Text>
         )}
 
         {doc.type !== "kwitansi" && (
