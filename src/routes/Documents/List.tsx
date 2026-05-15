@@ -64,7 +64,8 @@ export function DocumentsList() {
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
   const [seeding, setSeeding] = useState(false);
   const { confirm, dialog: confirmDialog } = useConfirm();
-  const { settings, company } = useAppStore((s) => ({ settings: s.settings, company: s.company }));
+  const settings = useAppStore((s) => s.settings);
+  const company = useAppStore((s) => s.company);
 
   const handleSeed = async () => {
     if (!company) return;
