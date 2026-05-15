@@ -374,3 +374,116 @@ Bila Anda akan eksekusi sendiri / oper ke developer, prioritaskan:
 2. Rilis ke beta tester (10–20 user) sebelum lanjut Phase 3+
 3. Iterasi berdasarkan feedback nyata sebelum cloud sync (Phase 5) — biar tidak over-engineer
 4. Cloud sync hanya ditambahkan kalau ada user yang minta (banyak user puas dengan local-only)
+
+---
+
+## Roadmap v1.x — UMKM Workflow Enhancements
+
+Diidentifikasi setelah audit "kalau lo jadi UMKM, apa yang kurang?" — fitur untuk improve daily workflow yang udah cukup mature scaffolding-nya.
+
+### Priority A — High impact, daily-use friction (target: 1-3 hari kerja per item)
+
+1. **Share via WhatsApp** — tombol "Kirim ke WA" di Editor + Documents list. Generate `wa.me` deep link dengan pesan template + opsi attach PDF. UMKM Indonesia 90% kirim via WA, bukan email.
+
+2. **Quote-to-invoice converter** — di dokumen tipe Penawaran (status `accepted`), tombol "Convert ke Invoice" → carry over items/klien/harga, prompt set tanggal jatuh tempo.
+
+3. **Invoice paid → auto-suggest Kwitansi** — saat invoice di-mark `paid`, modal "Bikin kwitansi sekarang?" dengan pre-filled data + field cara pembayaran.
+
+4. **Diskon total** — option diskon nominal/persen di level dokumen (bukan cuma per item). Tampil di totals box: Subtotal − Diskon Total − Diskon Item + PPN.
+
+5. **Halaman detail klien** — buka klien → riwayat dokumen, total spend YTD, outstanding, last contact. Buat keputusan repeat order / kasih diskon loyal customer.
+
+6. **Recurring invoice** — schedule "tiap awal bulan" → auto-generate invoice baru dari template. Buka subscription business model (hosting, sewa, langganan jasa).
+
+### Priority B — Important, can wait (1-2 minggu total)
+
+7. **Piutang / Aging report** — dashboard widget: "Outstanding by aging" (1-30 hari, 31-60, 61-90, 90+). Group by klien.
+
+8. **Reminder follow-up otomatis** — tiap pagi, generate notification untuk invoice yang sudah `sent` > 3 hari belum `paid`. Tombol "Kirim reminder via WA" di reminder list.
+
+9. **Document templates / preset** — save dokumen sebagai template ("Paket A", "Paket Hosting"). Klik "Buat dari template" → items pre-filled, tinggal pilih klien.
+
+10. **Search isi global** — extend Ctrl+K palette: tambah pencarian klien (nama/email), dokumen (nomor/notes/items), produk (nama/SKU). Bukan cuma navigation.
+
+11. **Export Excel** — bulk export dokumen ke .xlsx untuk akuntan / pelaporan pajak. Sheet per type, kolom standar.
+
+12. **Edit copy intro/closing per dokumen** — sekarang hardcoded "Dengan hormat...". Pindah ke field di tab Catatan, dengan default value, biar user bisa custom (formal/casual).
+
+### Priority C — Visual customization (1-2 minggu)
+
+13. **Configurable item table columns** — toggle per dokumen: SKU, Diskon %, PPN %, Berat, Catatan. Setiap template render sesuai toggle.
+
+14. **More toggles per dokumen di TemplatePicker** — show/hide validity callout, show/hide bank info, show/hide intro/closing. Posisi totals box (kanan/kiri/full).
+
+15. **Tambah preset template (4-6 baru)**:
+    - **Minimal** — sangat clean, 1 accent color
+    - **Branded Hero** — logo banner besar di atas
+    - **Construction** — tabel dengan kolom termin (DP/progress/pelunasan)
+    - **Service** — milestones + delivery date untuk freelancer jasa
+    - **Retail Receipt** — narrow 80mm format thermal-friendly
+    - **Bilingual** — header EN/ID side-by-side untuk klien luar negeri
+
+### Priority D — Niche / advanced (defer until requested)
+
+16. **Drag-drop template builder** (Canva-style) — visual editor, save sebagai custom template. Estimate 2-4 minggu solid coding. Bukan tweak existing — produk dalam produk. Tunggu user demand nyata sebelum invest.
+
+17. **e-Faktur DJP integration** — buat UMKM PKP, tapi plan asli skip karena complexity. Reconsider kalau target market expand ke perusahaan PKP.
+
+18. **OCR upload KTP/NPWP klien → auto-fill** — speed up onboarding klien baru.
+
+19. **Print thermal receipt** — kasir UMKM dengan printer 80mm.
+
+20. **Multi-staff dengan role/permission** — defer per plan original. Reconsider kalau ada beta tester request.
+
+### Priority E — Distribution & Quality (sebelum public launch)
+
+21. **Auto-updater** — generate keypair, host endpoint JSON di GitHub Releases atau R2.
+
+22. **Code signing** — Sectigo/SSL.com cert (~$80/tahun) untuk hilangkan SmartScreen warning.
+
+23. **Landing page** — `https://doxpro.id` dengan tombol download deteksi OS, demo screenshot, changelog.
+
+24. **Onboarding video / dokumentasi user** — 2-3 menit walkthrough, screenshot manual untuk fitur.
+
+25. **E2E tests lengkap** — plan minta 3 happy paths, sekarang baru 1 (`smoke.spec.ts`).
+
+26. **Component tests (RTL)** — currently 0. Cover Editor flows, form validation, signature pad.
+
+### Priority F — Cloud sync (deferred per plan, opt-in)
+
+27. **Supabase Auth UI** — magic link form, callback handler, status indicator.
+
+28. **Sync engine UI integration** — manual trigger button, conflict resolution UI, last-sync timestamp.
+
+29. **Storage Supabase** — upload logo + PDF backup ke cloud.
+
+30. **Multi-device sync verification** — install di mesin kedua, verifikasi data tersinkron.
+
+---
+
+## Selesai (Achievement Log per 2026-05-16)
+
+Sudah ter-implementasi di luar scope plan original:
+
+- ✅ Kwitansi PDF format proper Indonesia (3 template) dengan materai placeholder
+- ✅ Penawaran/Proposal validity callout
+- ✅ Proposal section parser (markdown `# heading` → section structured)
+- ✅ Command palette (Ctrl+K) + Ctrl+S editor + ? shortcuts dialog
+- ✅ Dashboard reminders (jatuh tempo invoice + expired penawaran)
+- ✅ Logo upload (Settings + Onboarding) + size/position quick controls di preview
+- ✅ Zoom controls preview (canvas via react-pdf, tajam s/d 300%) + Fit-height
+- ✅ ErrorBoundary global, EmptyState reusable, ConfirmDialog hook
+- ✅ 8 shadcn primitives (Tooltip, AlertDialog, Skeleton, Popover, Avatar, Progress, Sheet, ScrollArea, Calendar, DataTable)
+- ✅ Sidebar collapsible persistent + tooltip per nav item
+- ✅ Breadcrumb di Editor
+- ✅ DatePicker (react-day-picker, locale ID)
+- ✅ DataTable abstraction (sort + pagination + selection)
+- ✅ Bulk PDF export ke ZIP (jszip)
+- ✅ Sample data seeder (1-click "Isi Data Contoh")
+- ✅ Status filter di Documents list
+- ✅ Refresh button Dashboard
+- ✅ Backup encryption real (PBKDF2 + AES-GCM, dari audit branch)
+- ✅ Race-condition fix penomoran dokumen (SQL atomic increment, dari audit branch)
+- ✅ File upload validation (magic-byte + dimension check, dari audit branch)
+- ✅ ESLint v9 flat config + GitHub Actions CI (dari audit branch)
+- ✅ Production build verified: MSI 7.6 MB + NSIS 5.4 MB (jauh < 20 MB target plan)
