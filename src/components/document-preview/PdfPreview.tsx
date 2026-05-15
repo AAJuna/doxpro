@@ -1,9 +1,19 @@
-import { useState } from "react";
-import { PDFViewer } from "@react-pdf/renderer";
+import { useMemo, useState } from "react";
+import { BlobProvider } from "@react-pdf/renderer";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/TextLayer.css";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+// Worker URL via Vite-friendly new URL pattern
+const workerUrl = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
 import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  ChevronLeft,
+  ChevronRight,
   Image as ImageIcon,
   AlignLeft,
   AlignCenter,
@@ -13,6 +23,7 @@ import {
 } from "lucide-react";
 import { PdfTemplate } from "@/components/pdf-templates";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type {
   Company,
@@ -24,6 +35,8 @@ import type {
   LogoPosition,
 } from "@/types";
 
+pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+
 interface Props {
   doc: DocumentRecord;
   company: Company;
@@ -32,7 +45,7 @@ interface Props {
   onCustomizationsChange?: (v: DocumentCustomizations) => void;
 }
 
-const ZOOM_STEPS = [50, 75, 100, 125, 150, 175, 200];
+const ZOOM_STEPS = [50, 75, 100, 125, 150, 175, 200, 250, 300];
 const LOGO_SIZES: LogoSize[] = ["S", "M", "L", "XL"];
 const LOGO_POSITIONS: { id: LogoPosition; Icon: typeof AlignLeft }[] = [
   { id: "left", Icon: AlignLeft },
@@ -40,9 +53,21 @@ const LOGO_POSITIONS: { id: LogoPosition; Icon: typeof AlignLeft }[] = [
   { id: "right", Icon: AlignRight },
 ];
 
+const A4_WIDTH_PT = 595; // base PDF width in points
+
 export function PdfPreview({ doc, company, client, signature, onCustomizationsChange }: Props) {
   const [zoom, setZoom] = useState(100);
   const [logoPanel, setLogoPanel] = useState(false);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [numPages, setNumPages] = useState(0);
+
+  // Memoize the JSX so BlobProvider only re-renders blob when doc/company/client/signature changes
+  const pdfDoc = useMemo(
+    () => (
+      <PdfTemplate doc={doc} company={company} client={client!} signature={signature} />
+    ),
+    [doc, company, client, signature],
+  );
 
   if (!client) {
     return (
@@ -64,7 +89,6 @@ export function PdfPreview({ doc, company, client, signature, onCustomizationsCh
     setZoom(ZOOM_STEPS[Math.max(0, Math.min(ZOOM_STEPS.length - 1, idx + dir))]);
   };
 
-  const scale = zoom / 100;
   const c = doc.customizations;
   const logoSize = c.logoSize ?? "M";
   const logoPos = c.logoPosition ?? "left";
@@ -91,6 +115,33 @@ export function PdfPreview({ doc, company, client, signature, onCustomizationsCh
               <ImageIcon className="h-3.5 w-3.5" />
             </Button>
           )}
+          {numPages > 1 ? (
+            <div className="ml-2 flex items-center gap-1 text-xs text-muted-foreground">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+                disabled={pageNumber === 1}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
+              <span className="tabular-nums">
+                {pageNumber} / {numPages}
+              </span>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+                disabled={pageNumber === numPages}
+                aria-label="Next page"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ) : null}
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -185,22 +236,49 @@ export function PdfPreview({ doc, company, client, signature, onCustomizationsCh
         </div>
       )}
 
-      <div className="flex-1 overflow-auto bg-secondary/30">
-        <div
-          style={{
-            width: `${100 / scale}%`,
-            height: `${100 / scale}%`,
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
+      <div className="flex-1 overflow-auto bg-secondary/30 p-4 flex justify-center">
+        <BlobProvider document={pdfDoc}>
+          {({ url, loading, error }) => {
+            if (error) {
+              return (
+                <div className="flex h-full items-center justify-center text-sm text-destructive p-4">
+                  Gagal generate preview: {String(error)}
+                </div>
+              );
+            }
+            if (loading || !url) {
+              return (
+                <Skeleton
+                  className="bg-white shadow"
+                  style={{ width: A4_WIDTH_PT * (zoom / 100), height: 842 * (zoom / 100) }}
+                />
+              );
+            }
+            return (
+              <Document
+                file={url}
+                onLoadSuccess={({ numPages: n }) => {
+                  setNumPages(n);
+                  if (pageNumber > n) setPageNumber(n);
+                }}
+                loading={
+                  <Skeleton
+                    className="bg-white shadow"
+                    style={{ width: A4_WIDTH_PT * (zoom / 100), height: 842 * (zoom / 100) }}
+                  />
+                }
+              >
+                <Page
+                  pageNumber={pageNumber}
+                  width={A4_WIDTH_PT * (zoom / 100)}
+                  className="shadow-lg"
+                  renderAnnotationLayer={false}
+                  renderTextLayer={false}
+                />
+              </Document>
+            );
           }}
-        >
-          <PDFViewer
-            style={{ width: "100%", height: "100%", border: "none" }}
-            showToolbar={false}
-          >
-            <PdfTemplate doc={doc} company={company} client={client} signature={signature} />
-          </PDFViewer>
-        </div>
+        </BlobProvider>
       </div>
     </div>
   );
