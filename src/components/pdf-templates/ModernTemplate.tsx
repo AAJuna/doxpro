@@ -6,15 +6,15 @@ import { parseProposalSections } from "./proposalSections";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 const styles = StyleSheet.create({
-  page: { padding: 48, fontSize: 10, fontFamily: "Helvetica", color: "#0f172a" },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 32 },
+  page: { padding: 40, fontSize: 10, fontFamily: "Helvetica", color: "#0f172a" },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20 },
   brand: { fontSize: 20, fontWeight: 700, marginBottom: 4 },
   companyText: { fontSize: 9, color: "#64748b", lineHeight: 1.4 },
   docHeader: { textAlign: "right" },
   docType: { fontSize: 22, fontWeight: 700, letterSpacing: 1, marginBottom: 8 },
   docMeta: { fontSize: 9, color: "#64748b", lineHeight: 1.5 },
-  twoCol: { flexDirection: "row", gap: 16, marginBottom: 24 },
-  col: { flex: 1, backgroundColor: "#f8fafc", padding: 12, borderRadius: 6 },
+  twoCol: { flexDirection: "row", gap: 12, marginBottom: 16 },
+  col: { flex: 1, backgroundColor: "#f8fafc", padding: 10, borderRadius: 6 },
   colLabel: { fontSize: 8, color: "#94a3b8", textTransform: "uppercase", marginBottom: 4, letterSpacing: 0.5 },
   colName: { fontSize: 11, fontWeight: 600 },
   colText: { fontSize: 9, color: "#475569", lineHeight: 1.4, marginTop: 2 },
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   cellPrice: { width: "20%", textAlign: "right" },
   cellTotal: { width: "20%", textAlign: "right" },
   itemDesc: { fontSize: 8, color: "#94a3b8", marginTop: 2 },
-  totalsBox: { marginTop: 16, marginLeft: "auto", width: "40%" },
+  totalsBox: { marginTop: 10, marginLeft: "auto", width: "40%" },
   totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4 },
   totalLabel: { fontSize: 10, color: "#64748b" },
   totalValue: { fontSize: 10, fontWeight: 500 },
@@ -46,13 +46,13 @@ const styles = StyleSheet.create({
   },
   grandTotalLabel: { fontSize: 11, fontWeight: 700 },
   grandTotalValue: { fontSize: 13, fontWeight: 700 },
-  notesBox: { marginTop: 24, padding: 12, backgroundColor: "#f8fafc", borderRadius: 6 },
+  notesBox: { marginTop: 14, padding: 10, backgroundColor: "#f8fafc", borderRadius: 6 },
   notesLabel: { fontSize: 8, color: "#94a3b8", textTransform: "uppercase", marginBottom: 4, letterSpacing: 0.5 },
   notesText: { fontSize: 9, lineHeight: 1.5, color: "#475569" },
   terbilangText: { fontSize: 9, fontStyle: "italic", color: "#475569", marginTop: 8 },
-  signatureArea: { marginTop: 20, flexDirection: "row", justifyContent: "flex-end" },
+  signatureArea: { marginTop: 16, flexDirection: "row", justifyContent: "flex-end" },
   signatureBox: { width: 180, textAlign: "center" },
-  signatureLine: { borderTopWidth: 1, marginTop: 50, paddingTop: 4 },
+  signatureLine: { borderTopWidth: 1, marginTop: 40, paddingTop: 4 },
   signatureImage: { width: 120, height: 60, marginHorizontal: "auto" },
   bankBox: { marginTop: 16, padding: 12, borderLeftWidth: 3, paddingLeft: 12 },
   bankTitle: { fontSize: 9, fontWeight: 600, marginBottom: 4 },
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
     color: "#334155",
   },
   validityCallout: {
-    marginTop: 16,
-    padding: 12,
+    marginTop: 12,
+    padding: 10,
     borderLeftWidth: 3,
     paddingLeft: 12,
     flexDirection: "row",
@@ -406,7 +406,7 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
           </Text>
         )}
 
-        <View style={styles.signatureArea}>
+        <View style={styles.signatureArea} wrap={false}>
           <View style={styles.signatureBox}>
             <Text style={styles.notesText}>Hormat kami,</Text>
             {signature?.imagePath ? (
