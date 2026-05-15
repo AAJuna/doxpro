@@ -487,3 +487,176 @@ Sudah ter-implementasi di luar scope plan original:
 - ✅ File upload validation (magic-byte + dimension check, dari audit branch)
 - ✅ ESLint v9 flat config + GitHub Actions CI (dari audit branch)
 - ✅ Production build verified: MSI 7.6 MB + NSIS 5.4 MB (jauh < 20 MB target plan)
+
+---
+
+## Market Analysis & Strategic Positioning
+
+### Target Market
+
+**Universe:** ~64 juta UMKM di Indonesia (per BPS 2023). Kita TIDAK target semua.
+
+**Sweet spot kita (TAM ~500k-2M unit):**
+- Freelancer kreatif (designer, developer, copywriter)
+- Agency kecil (event organizer, digital agency, jasa)
+- Toko online B2B (bukan retail consumer)
+- Konsultan independen (HR, business, IT)
+- UMKM jasa profesional (akuntan, notaris, pengacara kecil)
+
+**Bukan target kita:**
+- Warung/UMKM mikro tradisional → BukuKas-style mobile app
+- Bisnis menengah-besar PKP → Mekari/Accurate (full accounting)
+- UMKM mobile-first → kita desktop-only (untuk sekarang)
+
+**Realistic ceiling:** 5,000-50,000 active users dengan organic growth + content marketing. Lebih kalau ada channel partnership.
+
+### Competitive Landscape
+
+| App | Harga | Strength | Weakness |
+|---|---|---|---|
+| **Mekari Jurnal** | Rp 199-799k/bln | Full accounting, established brand, banyak features | Mahal, kompleks, UI corporate-y, learning curve steep |
+| **Accurate Online** | Rp 200k+/bln | Established 20+ tahun, lengkap untuk PKP | UI legacy, less appealing untuk founder muda |
+| **Kledo** | Rp 99-299k/bln | Affordable, web-based, target UMKM small-medium | UI standar, kompetitor langsung kita di tier sama |
+| **BukuKas / BukuWarung** | Free + microtxn | Mobile-first, jutaan user, super simple | Limited invoice template, mobile-only, basic |
+| **Olsera** | Rp 250-500k/bln | POS + invoice integrated | Fokus retail, gak buat freelancer/jasa |
+| **Wave** (US) | Free | Polished UI, accounting solid | Bukan Rupiah-friendly, gak ada kwitansi Indonesia, US-centric |
+| **Zoho Invoice** | Free 5 klien | Polished, web-based | Web-only, gak Indonesia-specific format |
+| **Canva** templates | Free/Pro | Cantik, drag-drop | Static template, no DB, no kalkulasi otomatis |
+
+### doxpro's Differentiator (Defensible Moat)
+
+Kita main di **gap antara "Canva pretty + Excel power"** untuk segmen freelancer/agency yang underserved:
+
+1. **Premium UI/UX (Stripe-style)** di kelas UMKM kecil — kompetitor lokal generic
+2. **Indonesia-native PDF format** — kwitansi tradisional, materai placeholder, terbilang Rupiah, formal copy. Wave/Zoho gak punya. Mekari ada tapi mediocre execution.
+3. **Offline-first desktop** — reliable di internet flaky. Kompetitor 100% cloud (single point of failure)
+4. **Privacy/data lokal** — data UMKM gak ke cloud kecuali opt-in. Era data leak = value prop kuat
+5. **Focused scope** — cuma 4 doc types, bukan full accounting. Faster onboarding, simpler curve
+6. **Potensi pricing model unik** — free atau one-time license vs subscription yang banyak UMKM benci
+
+**Yang kita kalah dari kompetitor:**
+- Scope fitur (no jurnal, no neraca, no laporan keuangan lengkap)
+- Distribution (no marketing budget, single dev)
+- Mobile reach (BukuKas dominan di mobile)
+- Brand trust (baru, install desktop = scary buat non-tech user)
+
+### AI Integration Strategy
+
+**Bukan optional — ini differentiator + monetization angle utama untuk Pro tier.**
+
+#### Tier 1: Free Tier — Local AI (zero API cost)
+
+Pakai Ollama / WebLLM / GGUF model bundled. Slower tapi 100% gratis untuk user, jalan offline:
+- Auto-fill item description dari nama produk ("Konsultasi" → "Sesi konsultasi 60 menit, mencakup analisis dan rekomendasi tertulis")
+- Polish typo + grammar text dokumen
+- Smart klien autocomplete (local fuzzy search, no AI needed)
+- Suggest nomor dokumen dari pattern history
+- Auto-categorize item (jasa vs barang vs konsultasi)
+
+#### Tier 2: Pro Tier — Claude API ($5-15/bulan effective cost per user)
+
+Pakai Claude Haiku/Sonnet untuk fitur high-value:
+- **Generate proposal lengkap dari keywords** — user input "10 jam konsultasi digital marketing untuk e-commerce fashion" → AI keluarin draft 5 paragraf section-structured
+- **Auto-summary cash flow & insight** — "Bulan ini 15% lebih lambat dari rata-rata karena 3 invoice telat dari Klien X"
+- **Smart reminder generator** — AI nulis text WA reminder yang sopan tapi tegas, sesuai relationship lama klien
+- **Anomaly detection** — "Invoice ini 4x lebih besar dari rata-rata untuk klien ini, yakin?"
+- **Tax suggestion** — auto detect transaksi yang perlu PPh21 vs PPN based on context
+- **Voice/chat command** — "bikinin penawaran untuk Andi paket konsultasi 5 jam @750k" → done
+- **Conversational query** — "berapa total revenue Q1?" → answer + chart
+
+#### KILLER FEATURE: WhatsApp Chat → Document AI
+
+**Prioritas tertinggi.** Belum ada kompetitor yang punya. Workflow:
+
+1. User paste/forward chat WhatsApp negosiasi ke app
+2. AI extract: items, qty, harga, klien name, payment terms
+3. Auto-generate draft penawaran/invoice yang tinggal di-review
+4. User edit minor → kirim balik via WA dengan 1 klik
+
+**Why this is a moat:**
+- Mayoritas transaksi UMKM Indonesia start di WhatsApp
+- Manual translate chat → invoice = friction harian #1
+- Solving ini = product-market fit signal kuat
+- Kompetitor cloud SaaS (Mekari/Kledo/etc) gak fokus ke ini karena bukan strength mereka
+- **Effort:** Medium (~1 minggu prototype dengan Claude API)
+- **Impact:** Potential viral feature di komunitas UMKM/freelancer Indonesia
+
+### Monetization Strategy
+
+```
+Free Forever (Acquisition Funnel)
+├─ Semua document generator (4 types × 3 styles = 12 layouts)
+├─ Local AI (basic suggestions, description gen)
+├─ Backup encrypted local + import/export
+├─ 1 device, single user
+└─ Watermark "Made with doxpro" optional di footer
+
+Pro — Rp 49-99k/bulan ATAU Rp 499-999k one-time perpetual
+├─ Cloud sync multi-device (Supabase)
+├─ Claude AI features (proposal gen, insights, anomaly detect)
+├─ KILLER: WhatsApp chat → auto-document converter
+├─ Bulk operations advanced (mass update status, bulk email/WA send)
+├─ Custom template builder (Priority D dari roadmap)
+├─ Priority email support
+└─ Hilangkan watermark footer
+
+Team — Rp 199k/bulan per seat (post-launch)
+├─ Multi-staff dengan role/permission
+├─ Approval workflow
+├─ Audit log
+└─ Shared client/product catalog
+```
+
+**Pricing rationale:**
+- **Free** = land grab, build community, viral via word-of-mouth
+- **Pro one-time** option = appeal ke UMKM yang anti-subscription (banyak)
+- **Team subscription** = recurring revenue dari user serius (target 1-5% of free users)
+- **Effective ARPU target:** Rp 30-50k/bulan blended di year 2-3
+
+### Go-to-Market Strategy
+
+**Phase 1 (Bulan 1-2): MVP polish & beta**
+- Selesaiin Priority A roadmap (WA share, quote-to-invoice, recurring) untuk daily-use solid
+- Tambah local LLM integration untuk description auto-gen → "AI-powered" tanpa API cost
+- Bikin landing page minimal di doxpro.id + 1 video demo 90 detik
+- Beta test 20 UMKM lewat komunitas freelancer Indonesia (Discord/Telegram designer/dev/marketer)
+
+**Phase 2 (Bulan 3-6): Killer feature & launch**
+- Bangun **WhatsApp-to-document AI** (Claude API) sebagai killer differentiator
+- Launch Pro tier dengan cloud sync + AI features
+- Content marketing strategy:
+  - "10 template invoice gratis untuk freelancer Indonesia" → SEO + lead gen
+  - Tutorial Youtube series: 5 video "cara bikin invoice professional"
+  - Partner content dengan akun seperti @produktifaja, komunitas freelancer
+- Partner dengan komunitas: KMI (Kreator Indie), KOMPAK, group FB freelancer/agency
+
+**Phase 3 (Bulan 6-12): Scale & expand**
+- Mobile companion app (read-only dulu) — bridge ke mobile-first market
+- Reseller/affiliate program — komisi 30% untuk komunitas yang refer
+- Integration partnership: Mekari for handoff (kirim transaksi paid → otomatis ke jurnal Mekari)
+- Konten ekspansi: jadi go-to invoice tool untuk freelancer/agency Indonesia
+- Consider: open source "lite" version sebagai marketing strategy (Wave-style)
+
+### Risk Assessment
+
+| Risiko | Severity | Mitigasi |
+|---|---|---|
+| Distribution susah (no marketing budget) | High | Content marketing + community partnership early |
+| User retention rendah karena one-time use | Medium | Recurring invoice + reminder bikin user balik regularly |
+| Kompetitor kasih AI feature duluan | Medium | Move fast pada WhatsApp-to-doc, defend dengan UX integration |
+| Free user gak convert ke Pro | Medium | Pro features yang specifically valuable (AI, multi-device), bukan paywall fitur basic |
+| Trust issue desktop install | Medium-High | Code signing certificate ASAP, transparent privacy policy |
+| Mobile-first market not addressed | Medium | Roadmap mobile companion Phase 3, atau accept niche |
+| Claude API cost spike kalau viral | Low-Medium | Aggressive caching, free tier pakai local LLM, Pro tier ada usage cap |
+| Mekari/Accurate launch competitor langsung | Low | Mereka fokus enterprise, niche kita aman 1-2 tahun |
+
+### Success Metrics (target Year 1)
+
+- **Acquisition:** 5,000 install, 500 active monthly users
+- **Engagement:** 60% user create ≥1 dokumen/minggu
+- **Conversion to Pro:** 3-5% of active free users (~15-25 paid)
+- **Revenue:** Rp 1-3 juta/bulan oleh akhir Year 1 (sustainable side project, validation)
+- **NPS:** ≥50 (good for niche tool)
+- **Retention:** 40% MAU/MAU month 1→6
+
+Year 2-3: scale to 50k installs, 5k active, 200-500 paid users → Rp 10-50 juta/bulan revenue → bisa hire 1-2 dev part-time
