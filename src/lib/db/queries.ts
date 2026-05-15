@@ -390,10 +390,12 @@ export async function deleteDocument(id: string): Promise<void> {
   await execute("DELETE FROM documents WHERE id=?", [id]);
 }
 
+// Atomic increment via UPSERT + RETURNING (SQLite >= 3.35). Concurrent
+// callers each get a distinct sequence — no race. Tradeoff: opening the
+// editor allocates a number; cancelling without save leaves a gap, which
+// is preferable to duplicate numbers on simultaneous saves.
 export async function nextDocumentSequence(type: DocumentType, year: number, month: number): Promise<number> {
   const ym = `${year}-${month.toString().padStart(2, "0")}`;
-  // Atomic increment via UPSERT + RETURNING (SQLite >= 3.35).
-  // Concurrent callers will each get a distinct sequence — no race.
   const rows = await select<{ next_seq: number }>(
     `INSERT INTO document_sequences (type, year_month, next_seq) VALUES (?, ?, 1)
      ON CONFLICT(type, year_month) DO UPDATE SET next_seq = next_seq + 1
