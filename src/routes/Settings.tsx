@@ -25,6 +25,7 @@ import { companySchema, type CompanyInput } from "@/lib/validators";
 import { saveCompany } from "@/lib/db/queries";
 import { useAppStore } from "@/store/useAppStore";
 import { LogoUpload } from "@/components/LogoUpload";
+import { CloudSyncSection } from "@/components/CloudSyncSection";
 import { downloadBackup, readBackupFile, importBackup } from "@/lib/backup";
 
 export function Settings() {
@@ -287,37 +288,7 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="cloud">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CardTitle>Cloud Sync</CardTitle>
-                <Badge variant="secondary">Coming Soon</Badge>
-              </div>
-              <CardDescription>
-                Sinkronisasi data multi-device sedang dalam pengembangan. Data Anda saat ini
-                tersimpan aman di komputer ini saja.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-lg border border-dashed bg-secondary/40 p-4 text-sm text-muted-foreground">
-                <p className="mb-2">
-                  Fitur sync 2-arah, login magic link, dan resolusi konflik akan tersedia pada rilis
-                  berikutnya. Sementara waktu, gunakan <b>Backup &amp; Restore</b> untuk memindahkan
-                  data antar device.
-                </p>
-                <p className="text-xs">
-                  Ingin jadi beta tester saat fitur ini siap? Kabari kami lewat website doxpro.id.
-                </p>
-              </div>
-              <div className="flex items-center justify-between opacity-50">
-                <div>
-                  <Label>Aktifkan Cloud Sync</Label>
-                  <p className="text-xs text-muted-foreground">Belum tersedia.</p>
-                </div>
-                <Switch checked={false} disabled />
-              </div>
-            </CardContent>
-          </Card>
+          <CloudSyncSection />
         </TabsContent>
 
         <TabsContent value="backup">

@@ -1,3 +1,4 @@
+import type { Session, User } from "@supabase/supabase-js";
 import { getSupabase, isCloudConfigured } from "./supabase";
 import { listClients, listProducts, listDocuments, getCompany } from "@/lib/db/queries";
 
@@ -8,6 +9,33 @@ export type SyncResult = {
   conflicts: number;
   error?: string;
 };
+
+export async function getCurrentSession(): Promise<Session | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session ?? null;
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  const session = await getCurrentSession();
+  return session?.user ?? null;
+}
+
+/**
+ * Subscribe to auth state changes (login/logout). Returns unsubscribe function.
+ * Useful untuk component yang perlu re-render saat session berubah.
+ */
+export function onAuthStateChange(
+  callback: (session: Session | null) => void,
+): () => void {
+  const supabase = getSupabase();
+  if (!supabase) return () => {};
+  const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session);
+  });
+  return () => sub.subscription.unsubscribe();
+}
 
 /**
  * Stub sync engine. Real implementation should:

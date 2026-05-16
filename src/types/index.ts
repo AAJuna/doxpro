@@ -133,4 +133,6 @@ export interface AppSettings {
   theme: "light" | "dark" | "system";
   cloudSyncEnabled: boolean;
   autoBackupEnabled: boolean;
+  /** Timestamp ISO sync terakhir berhasil (optional, dipersist) */
+  lastSyncAt?: string;
 }
