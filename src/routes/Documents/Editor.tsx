@@ -23,6 +23,7 @@ import { TemplatePicker } from "@/components/document-editor/TemplatePicker";
 import { PdfPreview } from "@/components/document-preview/PdfPreview";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DatePicker } from "@/components/ui/date-picker";
+import { getDefaultIntro, getDefaultClosing } from "@/components/pdf-templates/copy";
 import {
   getDocument,
   saveDocument,
@@ -693,6 +694,37 @@ export function DocumentEditor() {
                   </div>
                 </CardContent>
               </Card>
+
+              {(doc.type === "penawaran" || doc.type === "invoice") && (
+                <Card className="mt-3">
+                  <CardHeader>
+                    <CardTitle className="text-base">Paragraf Pembuka & Penutup</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Kosongkan untuk pakai default. Isi untuk override teks formal di PDF.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                      <Label>Paragraf Pembuka</Label>
+                      <Textarea
+                        rows={3}
+                        value={doc.introText ?? ""}
+                        onChange={(e) => updateDoc({ introText: e.target.value })}
+                        placeholder={getDefaultIntro(doc.type)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Paragraf Penutup</Label>
+                      <Textarea
+                        rows={3}
+                        value={doc.closingText ?? ""}
+                        onChange={(e) => updateDoc({ closingText: e.target.value })}
+                        placeholder={getDefaultClosing(doc.type)}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
         </div>

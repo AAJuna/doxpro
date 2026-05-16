@@ -3,6 +3,7 @@ import type { PdfTemplateProps } from "./types";
 import { docLabel } from "./labels";
 import { logoBox } from "./logoSize";
 import { parseProposalSections } from "./proposalSections";
+import { getClosingText, getIntroText } from "./copy";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 const styles = StyleSheet.create({
@@ -290,13 +291,9 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
           </View>
         )}
 
-        {doc.type === "penawaran" && (
-          <Text style={styles.intro}>
-            Dengan hormat,{"\n\n"}
-            Sehubungan dengan permintaan penawaran harga, dengan ini kami sampaikan penawaran
-            untuk produk/jasa berikut:
-          </Text>
-        )}
+        {getIntroText(doc) ? (
+          <Text style={styles.intro}>{getIntroText(doc)}</Text>
+        ) : null}
 
         {(doc.type === "penawaran" || doc.type === "invoice") && (
           <View style={styles.table}>
@@ -399,21 +396,9 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
           </View>
         )}
 
-        {doc.type === "penawaran" && (
-          <Text style={styles.closing}>
-            Demikian penawaran ini kami sampaikan. Apabila ada pertanyaan atau memerlukan
-            penyesuaian, silakan menghubungi kami. Atas perhatian dan kerja samanya, kami
-            ucapkan terima kasih.
-          </Text>
-        )}
-
-        {doc.type === "invoice" && (
-          <Text style={styles.closing}>
-            Mohon pembayaran dilakukan paling lambat tanggal jatuh tempo di atas. Konfirmasi
-            pembayaran dapat dikirim ke email atau WhatsApp kami. Terima kasih atas kerja
-            samanya.
-          </Text>
-        )}
+        {getClosingText(doc) ? (
+          <Text style={styles.closing}>{getClosingText(doc)}</Text>
+        ) : null}
 
         <View style={styles.signatureArea} wrap={false}>
           <View style={styles.signatureBox}>

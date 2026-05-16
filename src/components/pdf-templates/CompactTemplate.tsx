@@ -2,6 +2,7 @@ import { Page, Document, Text, View, StyleSheet, Image } from "@react-pdf/render
 import type { PdfTemplateProps } from "./types";
 import { docLabel } from "./labels";
 import { parseProposalSections } from "./proposalSections";
+import { getClosingText, getIntroText } from "./copy";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 const styles = StyleSheet.create({
@@ -208,11 +209,9 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
           </View>
         )}
 
-        {doc.type === "penawaran" && (
-          <Text style={styles.intro}>
-            Dengan hormat, berikut penawaran harga untuk produk/jasa di bawah ini:
-          </Text>
-        )}
+        {getIntroText(doc, true) ? (
+          <Text style={styles.intro}>{getIntroText(doc, true)}</Text>
+        ) : null}
 
         {(doc.type === "penawaran" || doc.type === "invoice") && (
           <View style={styles.table}>
@@ -296,18 +295,9 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
           </Text>
         )}
 
-        {doc.type === "penawaran" && (
-          <Text style={styles.closing}>
-            Demikian penawaran ini kami sampaikan. Atas perhatian dan kerja samanya, terima kasih.
-          </Text>
-        )}
-
-        {doc.type === "invoice" && (
-          <Text style={styles.closing}>
-            Mohon pembayaran sesuai jatuh tempo. Konfirmasi pembayaran via email/WhatsApp.
-            Terima kasih.
-          </Text>
-        )}
+        {getClosingText(doc, true) ? (
+          <Text style={styles.closing}>{getClosingText(doc, true)}</Text>
+        ) : null}
 
         <View style={styles.signRow}>
           <View style={styles.signBox}>

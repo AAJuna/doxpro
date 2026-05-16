@@ -106,6 +106,8 @@ export interface DocumentRecord {
   proposalContent?: string;
   globalDiscountType?: "amount" | "percent";
   globalDiscountValue?: number;
+  introText?: string;
+  closingText?: string;
   createdAt: string;
   updatedAt: string;
   items: DocumentItem[];

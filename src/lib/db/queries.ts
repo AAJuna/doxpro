@@ -125,6 +125,8 @@ function mapDocument(r: Row, items: DocumentItem[]): DocumentRecord {
     proposalContent: (r.proposal_content ?? undefined) as string | undefined,
     globalDiscountType: (r.global_discount_type ?? undefined) as "amount" | "percent" | undefined,
     globalDiscountValue: (r.global_discount_value ?? undefined) as number | undefined,
+    introText: (r.intro_text ?? undefined) as string | undefined,
+    closingText: (r.closing_text ?? undefined) as string | undefined,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
     items,
@@ -311,7 +313,8 @@ export async function saveDocument(
     await execute(
       `UPDATE documents SET type=?, number=?, date=?, valid_until=?, due_date=?, client_id=?, status=?,
        totals_json=?, customizations_json=?, signature_id=?, notes=?, terms_text=?, payment_method=?,
-       received_from=?, proposal_content=?, global_discount_type=?, global_discount_value=?, updated_at=? WHERE id=?`,
+       received_from=?, proposal_content=?, global_discount_type=?, global_discount_value=?,
+       intro_text=?, closing_text=?, updated_at=? WHERE id=?`,
       [
         input.type,
         input.number,
@@ -330,6 +333,8 @@ export async function saveDocument(
         input.proposalContent ?? null,
         input.globalDiscountType ?? null,
         input.globalDiscountValue ?? null,
+        input.introText ?? null,
+        input.closingText ?? null,
         now,
         id,
       ],
@@ -339,8 +344,9 @@ export async function saveDocument(
     await execute(
       `INSERT INTO documents (id, type, number, date, valid_until, due_date, client_id, status,
        totals_json, customizations_json, signature_id, notes, terms_text, payment_method,
-       received_from, proposal_content, global_discount_type, global_discount_value, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       received_from, proposal_content, global_discount_type, global_discount_value,
+       intro_text, closing_text, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.type,
@@ -360,6 +366,8 @@ export async function saveDocument(
         input.proposalContent ?? null,
         input.globalDiscountType ?? null,
         input.globalDiscountValue ?? null,
+        input.introText ?? null,
+        input.closingText ?? null,
         now,
         now,
       ],

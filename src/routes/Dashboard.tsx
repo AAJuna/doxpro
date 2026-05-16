@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FileText, Plus, TrendingUp, AlertCircle, Users, DollarSign, Clock, Sparkles, RefreshCw } from "lucide-react";
+import { FileText, Plus, TrendingUp, AlertCircle, Users, DollarSign, Clock, Sparkles, RefreshCw, Send } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -19,6 +19,7 @@ import { listDocuments, listClients } from "@/lib/db/queries";
 import { formatCurrency, formatDateShort } from "@/lib/format";
 import { useAppStore } from "@/store/useAppStore";
 import { seedSampleData } from "@/lib/seed";
+import { buildWhatsAppMessage, normalizePhoneForWA, openWhatsAppChat } from "@/lib/share";
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -99,9 +100,31 @@ export function Dashboard() {
 
   const recent = docs.slice(0, 5);
 
-  // Reminders
+  // Reminders & Aging
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  // Aging buckets dari invoice belum lunas (sent/overdue), berdasarkan tanggal terbit
+  const aging = useMemo(() => {
+    const buckets = { current: 0, b30: 0, b60: 0, b90: 0, b90plus: 0 };
+    for (const d of docs) {
+      if (d.type !== "invoice") continue;
+      if (d.status !== "sent" && d.status !== "overdue") continue;
+      const issued = new Date(d.date);
+      issued.setHours(0, 0, 0, 0);
+      const ageDays = Math.round((today.getTime() - issued.getTime()) / (24 * 60 * 60 * 1000));
+      if (ageDays <= 0) buckets.current += d.totals.grandTotal;
+      else if (ageDays <= 30) buckets.b30 += d.totals.grandTotal;
+      else if (ageDays <= 60) buckets.b60 += d.totals.grandTotal;
+      else if (ageDays <= 90) buckets.b90 += d.totals.grandTotal;
+      else buckets.b90plus += d.totals.grandTotal;
+    }
+    return buckets;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docs]);
+
+  const agingTotal =
+    aging.current + aging.b30 + aging.b60 + aging.b90 + aging.b90plus;
   const daysFromToday = (iso: string) => {
     const d = new Date(iso);
     d.setHours(0, 0, 0, 0);
@@ -258,6 +281,46 @@ export function Dashboard() {
         </Card>
       </div>
 
+      {agingTotal > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Piutang (Aging)</CardTitle>
+              <CardDescription>
+                Outstanding invoice berdasarkan umur (tanggal terbit)
+              </CardDescription>
+            </div>
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-5 gap-3 text-sm">
+              {(
+                [
+                  { label: "Belum jatuh tempo", value: aging.current, tone: "text-muted-foreground" },
+                  { label: "1-30 hari", value: aging.b30, tone: "text-foreground" },
+                  { label: "31-60 hari", value: aging.b60, tone: "text-amber-700 dark:text-amber-400" },
+                  { label: "61-90 hari", value: aging.b90, tone: "text-amber-700 dark:text-amber-400" },
+                  { label: "90+ hari", value: aging.b90plus, tone: "text-destructive" },
+                ] as const
+              ).map((b) => (
+                <div key={b.label} className="rounded-md border p-3">
+                  <div className="text-xs text-muted-foreground">{b.label}</div>
+                  <div className={`mt-1 font-semibold tabular-nums ${b.tone}`}>
+                    {formatCurrency(b.value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+              <span>Total outstanding</span>
+              <span className="font-semibold text-foreground">
+                {formatCurrency(agingTotal)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {reminders.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -271,6 +334,7 @@ export function Dashboard() {
             {reminders.map(({ doc: d, days, kind }) => {
               const client = clients.find((c) => c.id === d.clientId);
               const overdue = days < 0;
+              const canSendWa = !!client;
               return (
                 <div
                   key={d.id}
@@ -289,11 +353,30 @@ export function Dashboard() {
                       {formatDateShort(kind === "invoice" ? d.dueDate! : d.validUntil!)}
                     </div>
                   </div>
-                  <Badge variant={overdue ? "destructive" : days <= 1 ? "warning" : "secondary"}>
-                    {overdue ? `Telat ${Math.abs(days)} hari`
-                            : days === 0 ? "Hari ini"
-                            : `${days} hari lagi`}
-                  </Badge>
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    {canSendWa && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        title="Kirim reminder via WhatsApp"
+                        onClick={() => {
+                          const phone = normalizePhoneForWA(client!.phone);
+                          openWhatsAppChat(
+                            buildWhatsAppMessage(d, company, client!),
+                            phone ?? undefined,
+                          );
+                        }}
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <Badge variant={overdue ? "destructive" : days <= 1 ? "warning" : "secondary"}>
+                      {overdue ? `Telat ${Math.abs(days)} hari`
+                              : days === 0 ? "Hari ini"
+                              : `${days} hari lagi`}
+                    </Badge>
+                  </div>
                 </div>
               );
             })}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X, Sparkles, Send } from "lucide-react";
+import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X, Sparkles, Send, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ import {
 } from "@/lib/db/queries";
 import { renderPdfBlob, downloadBlob, defaultFilename, renderPdfsToZip, bulkZipFilename } from "@/lib/pdf/generate";
 import { buildWhatsAppMessage, normalizePhoneForWA, openWhatsAppChat } from "@/lib/share";
+import { exportDocumentsToExcel } from "@/lib/excel";
 import { generateDocumentNumber } from "@/lib/calc";
 import { useAppStore } from "@/store/useAppStore";
 import { uuid, nowIso } from "@/lib/utils";
@@ -238,19 +239,35 @@ export function DocumentsList() {
           <h1 className="text-2xl font-semibold tracking-tight">Dokumen</h1>
           <p className="text-sm text-muted-foreground">{docs.length} dokumen tersimpan</p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4" /> Buat Dokumen
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => navigate("/documents/new/invoice")}>Invoice</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/documents/new/penawaran")}>Surat Penawaran</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/documents/new/kwitansi")}>Kwitansi</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/documents/new/proposal")}>Proposal</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              try {
+                exportDocumentsToExcel({ docs: filtered, clients });
+                toast.success(`${filtered.length} dokumen di-export ke Excel`);
+              } catch (e) {
+                toast.error("Gagal export: " + (e instanceof Error ? e.message : String(e)));
+              }
+            }}
+            disabled={filtered.length === 0}
+          >
+            <FileSpreadsheet className="h-4 w-4" /> Export Excel
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4" /> Buat Dokumen
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate("/documents/new/invoice")}>Invoice</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/documents/new/penawaran")}>Surat Penawaran</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/documents/new/kwitansi")}>Kwitansi</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/documents/new/proposal")}>Proposal</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="mb-4 flex items-center gap-3">

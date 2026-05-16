@@ -61,6 +61,8 @@ export const documents = sqliteTable("documents", {
   proposalContent: text("proposal_content"),
   globalDiscountType: text("global_discount_type"),
   globalDiscountValue: real("global_discount_value"),
+  introText: text("intro_text"),
+  closingText: text("closing_text"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
