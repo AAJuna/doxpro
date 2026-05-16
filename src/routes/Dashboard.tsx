@@ -388,7 +388,11 @@ export function Dashboard() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-base">Dokumen Terbaru</CardTitle>
-            <CardDescription>5 dokumen yang baru diubah</CardDescription>
+            <CardDescription>
+              {recent.length === 0
+                ? "Belum ada dokumen"
+                : `${recent.length} dokumen terakhir diubah`}
+            </CardDescription>
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate("/documents")}>
             Lihat semua
