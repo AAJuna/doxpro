@@ -274,21 +274,22 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
         )}
 
         {(doc.customizations.showValidityCallout ?? true) &&
-          (doc.type === "penawaran" || doc.type === "proposal") && doc.validUntil && (
+          (doc.type === "penawaran" || doc.type === "proposal") &&
+          doc.validUntil ? (
           <View style={[styles.validityNote, { borderLeftColor: accent, backgroundColor: accent + "10" }]}>
             <Text style={{ fontSize: 8, fontWeight: 700, color: accent }}>
               {doc.type === "penawaran" ? "Berlaku sampai" : "Proposal berlaku s.d."} {formatDate(doc.validUntil)} · Mohon konfirmasi sebelum tanggal tersebut
             </Text>
           </View>
-        )}
+        ) : null}
 
         {(doc.customizations.showBankInfo ?? true) &&
-          doc.type === "invoice" && company.bankName && (
+          doc.type === "invoice" && company.bankName ? (
           <Text style={styles.smallNote}>
             Pembayaran: {company.bankName} · {company.bankAccount} · A/N{" "}
             {company.bankHolder ?? company.name}
           </Text>
-        )}
+        ) : null}
 
         {(doc.notes?.trim() || doc.termsText?.trim()) ? (
           <Text style={styles.smallNote}>

@@ -325,7 +325,8 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
             )}
 
             {(doc.customizations.showValidityCallout ?? true) &&
-              (doc.type === "penawaran" || doc.type === "proposal") && doc.validUntil && (
+              (doc.type === "penawaran" || doc.type === "proposal") &&
+              doc.validUntil ? (
               <View style={styles.validityCallout}>
                 <Text style={styles.validityTitle}>
                   {doc.type === "penawaran" ? "PENAWARAN BERLAKU SAMPAI" : "PROPOSAL BERLAKU SAMPAI"}
@@ -335,17 +336,17 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
                   Mohon konfirmasi sebelum tanggal tersebut. Setelah lewat, syarat & harga dapat berubah.
                 </Text>
               </View>
-            )}
+            ) : null}
 
             {(doc.customizations.showBankInfo ?? true) &&
-              doc.type === "invoice" && company.bankName && (
+              doc.type === "invoice" && company.bankName ? (
               <View style={styles.bankBox}>
                 <Text style={styles.notesLabel}>Pembayaran:</Text>
                 <Text style={styles.notesText}>
                   Bank {company.bankName} · No. Rek. {company.bankAccount} · A/N {company.bankHolder ?? company.name}
                 </Text>
               </View>
-            )}
+            ) : null}
           </>
         )}
 

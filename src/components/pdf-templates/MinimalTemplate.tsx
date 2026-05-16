@@ -327,7 +327,8 @@ export function MinimalTemplate({ doc, company, client, signature }: PdfTemplate
         )}
 
         {(c.showValidityCallout ?? true) &&
-          (doc.type === "penawaran" || doc.type === "proposal") && doc.validUntil && (
+          (doc.type === "penawaran" || doc.type === "proposal") &&
+          doc.validUntil ? (
           <View style={[styles.callout, { borderLeftColor: accent }]}>
             <View>
               <Text style={[styles.calloutTitle, { color: accent }]}>
@@ -341,14 +342,14 @@ export function MinimalTemplate({ doc, company, client, signature }: PdfTemplate
               {formatDate(doc.validUntil)}
             </Text>
           </View>
-        )}
+        ) : null}
 
-        {(c.showBankInfo ?? true) && doc.type === "invoice" && company.bankName && (
+        {(c.showBankInfo ?? true) && doc.type === "invoice" && company.bankName ? (
           <Text style={styles.bankLine}>
             Pembayaran: {company.bankName} · {company.bankAccount} · A/N{" "}
             {company.bankHolder ?? company.name}
           </Text>
-        )}
+        ) : null}
 
         {(doc.notes?.trim() || doc.termsText?.trim()) ? (
           <Text style={styles.notesBlock}>

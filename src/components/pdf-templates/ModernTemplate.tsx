@@ -379,7 +379,8 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
         )}
 
         {(c.showValidityCallout ?? true) &&
-          (doc.type === "penawaran" || doc.type === "proposal") && doc.validUntil && (
+          (doc.type === "penawaran" || doc.type === "proposal") &&
+          doc.validUntil ? (
           <View style={[styles.validityCallout, { borderLeftColor: accent, backgroundColor: accent + "10" }]}>
             <View>
               <Text style={[styles.validityTitle, { color: accent }]}>
@@ -391,9 +392,9 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
             </View>
             <Text style={[styles.validityDate, { color: accent }]}>{formatDate(doc.validUntil)}</Text>
           </View>
-        )}
+        ) : null}
 
-        {(c.showBankInfo ?? true) && doc.type === "invoice" && company.bankName && company.bankAccount && (
+        {(c.showBankInfo ?? true) && doc.type === "invoice" && company.bankName && company.bankAccount ? (
           <View style={[styles.bankBox, { borderLeftColor: accent }]}>
             <Text style={styles.bankTitle}>Instruksi Pembayaran</Text>
             <Text style={styles.bankText}>
@@ -402,7 +403,7 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
               {"\n"}A/N: {company.bankHolder ?? company.name}
             </Text>
           </View>
-        )}
+        ) : null}
 
         {doc.notes?.trim() ? (
           <View style={styles.notesBox}>
