@@ -332,8 +332,17 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
             </View>
             {doc.totals.totalDiscount > 0 && (
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Diskon</Text>
+                <Text style={styles.totalLabel}>Diskon Item</Text>
                 <Text style={styles.totalValue}>-{formatCurrency(doc.totals.totalDiscount)}</Text>
+              </View>
+            )}
+            {(doc.totals.globalDiscount ?? 0) > 0 && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>
+                  Diskon Total
+                  {doc.globalDiscountType === "percent" ? ` (${doc.globalDiscountValue}%)` : ""}
+                </Text>
+                <Text style={styles.totalValue}>-{formatCurrency(doc.totals.globalDiscount ?? 0)}</Text>
               </View>
             )}
             {doc.totals.totalTax > 0 && (

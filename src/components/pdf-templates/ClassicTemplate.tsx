@@ -301,8 +301,17 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
                 </View>
                 {doc.totals.totalDiscount > 0 && (
                   <View style={styles.totalRow}>
-                    <Text>Diskon</Text>
+                    <Text>Diskon Item</Text>
                     <Text>-{formatCurrency(doc.totals.totalDiscount)}</Text>
+                  </View>
+                )}
+                {(doc.totals.globalDiscount ?? 0) > 0 && (
+                  <View style={styles.totalRow}>
+                    <Text>
+                      Diskon Total
+                      {doc.globalDiscountType === "percent" ? ` (${doc.globalDiscountValue}%)` : ""}
+                    </Text>
+                    <Text>-{formatCurrency(doc.totals.globalDiscount ?? 0)}</Text>
                   </View>
                 )}
                 {doc.totals.totalTax > 0 && (

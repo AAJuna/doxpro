@@ -67,7 +67,8 @@ export interface DocumentItem {
 
 export interface DocumentTotals {
   subtotal: number;
-  totalDiscount: number;
+  totalDiscount: number; // diskon per-item (aggregated)
+  globalDiscount?: number; // diskon nominal level dokumen
   totalTax: number;
   grandTotal: number;
 }
@@ -103,6 +104,8 @@ export interface DocumentRecord {
   paymentMethod?: string;
   receivedFrom?: string;
   proposalContent?: string;
+  globalDiscountType?: "amount" | "percent";
+  globalDiscountValue?: number;
   createdAt: string;
   updatedAt: string;
   items: DocumentItem[];

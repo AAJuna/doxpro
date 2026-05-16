@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Download, FileText } from "lucide-react";
+import { ArrowLeft, Save, Download, FileText, Send, ArrowRight, FileCheck } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -33,6 +33,7 @@ import {
   nextDocumentSequence,
 } from "@/lib/db/queries";
 import { renderPdfBlob, downloadBlob, defaultFilename } from "@/lib/pdf/generate";
+import { buildWhatsAppMessage, normalizePhoneForWA, openWhatsAppChat } from "@/lib/share";
 import { calcTotals, generateDocumentNumber } from "@/lib/calc";
 import { useAppStore } from "@/store/useAppStore";
 import { uuid, nowIso } from "@/lib/utils";
@@ -125,7 +126,11 @@ export function DocumentEditor() {
 
   const totals = useMemo(() => {
     if (!doc) return { subtotal: 0, totalDiscount: 0, totalTax: 0, grandTotal: 0 };
-    return calcTotals(doc.items);
+    const gd =
+      doc.globalDiscountType && doc.globalDiscountValue
+        ? { type: doc.globalDiscountType, value: doc.globalDiscountValue }
+        : undefined;
+    return calcTotals(doc.items, gd);
   }, [doc]);
 
   useEffect(() => {
@@ -196,7 +201,11 @@ export function DocumentEditor() {
   };
 
   const updateItems = (items: DocumentItem[]) => {
-    setDoc({ ...doc, items, totals: calcTotals(items), updatedAt: nowIso() });
+    const gd =
+      doc.globalDiscountType && doc.globalDiscountValue
+        ? { type: doc.globalDiscountType, value: doc.globalDiscountValue }
+        : undefined;
+    setDoc({ ...doc, items, totals: calcTotals(items, gd), updatedAt: nowIso() });
   };
 
   const handleSave = async () => {
@@ -231,6 +240,114 @@ export function DocumentEditor() {
     }
   };
 
+  const handleCreateKwitansi = async () => {
+    if (doc.type !== "invoice" || !doc.clientId) return;
+    try {
+      const today = new Date();
+      const seq = await nextDocumentSequence(
+        "kwitansi",
+        today.getFullYear(),
+        today.getMonth() + 1,
+      );
+      const newNumber = generateDocumentNumber(
+        settings.numberingScheme,
+        "kwitansi",
+        seq,
+        today,
+      );
+      const newId = uuid();
+      const client = currentClient;
+      const kwitansi: DocumentRecord = {
+        ...doc,
+        id: newId,
+        type: "kwitansi",
+        number: newNumber,
+        date: today.toISOString().slice(0, 10),
+        dueDate: undefined,
+        validUntil: undefined,
+        status: "paid",
+        receivedFrom: client?.name ?? doc.receivedFrom,
+        paymentMethod: doc.paymentMethod ?? "Transfer Bank",
+        items: doc.items.map((it) => ({ ...it, id: uuid(), documentId: newId })),
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+      };
+      await saveDocument(kwitansi);
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("Kwitansi dibuat dari invoice ini");
+      navigate(`/documents/${newId}`);
+    } catch (e) {
+      toast.error("Gagal bikin kwitansi: " + String(e));
+    }
+  };
+
+  const handleConvertToInvoice = async () => {
+    if (doc.type !== "penawaran" && doc.type !== "proposal") return;
+    if (!doc.clientId) {
+      toast.error("Pilih klien dulu");
+      return;
+    }
+    try {
+      const today = new Date();
+      const seq = await nextDocumentSequence(
+        "invoice",
+        today.getFullYear(),
+        today.getMonth() + 1,
+      );
+      const newNumber = generateDocumentNumber(
+        settings.numberingScheme,
+        "invoice",
+        seq,
+        today,
+      );
+      const newId = uuid();
+      const invoice: DocumentRecord = {
+        ...doc,
+        id: newId,
+        type: "invoice",
+        number: newNumber,
+        date: today.toISOString().slice(0, 10),
+        dueDate: new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 10),
+        validUntil: undefined,
+        status: "draft",
+        items: doc.items.map((it) => ({ ...it, id: uuid(), documentId: newId })),
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+      };
+      await saveDocument(invoice);
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("Invoice baru dibuat dari penawaran ini");
+      navigate(`/documents/${newId}`);
+    } catch (e) {
+      toast.error("Gagal convert: " + String(e));
+    }
+  };
+
+  const handleSendWa = async () => {
+    if (!currentClient) {
+      toast.error("Pilih klien dulu");
+      return;
+    }
+    const phone = normalizePhoneForWA(currentClient.phone);
+    const message = buildWhatsAppMessage(doc, company, currentClient);
+    // Download PDF dulu biar user tinggal attach manual di WA
+    try {
+      const blob = await renderPdfBlob(doc, company, currentClient, currentSignature);
+      downloadBlob(blob, defaultFilename(doc));
+    } catch (e) {
+      toast.error("Gagal generate PDF: " + String(e));
+      return;
+    }
+    openWhatsAppChat(message, phone ?? undefined);
+    toast.success(
+      phone
+        ? "PDF diunduh. Chat WhatsApp dibuka — tinggal attach PDF."
+        : "PDF diunduh. Pilih kontak WhatsApp manual lalu attach PDF.",
+    );
+  };
+
   return (
     <div className="flex h-full flex-col">
       {/* Toolbar */}
@@ -263,6 +380,19 @@ export function DocumentEditor() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {(doc.type === "penawaran" || doc.type === "proposal") && (
+            <Button variant="outline" onClick={handleConvertToInvoice}>
+              <ArrowRight className="h-4 w-4" /> Convert ke Invoice
+            </Button>
+          )}
+          {doc.type === "invoice" && doc.status === "paid" && (
+            <Button variant="outline" onClick={handleCreateKwitansi}>
+              <FileCheck className="h-4 w-4" /> Bikin Kwitansi
+            </Button>
+          )}
+          <Button variant="outline" onClick={handleSendWa}>
+            <Send className="h-4 w-4" /> Kirim WA
+          </Button>
           <Button variant="outline" onClick={handleDownload}>
             <Download className="h-4 w-4" /> Unduh PDF
           </Button>
@@ -453,15 +583,58 @@ export function DocumentEditor() {
                       products={products}
                       documentId={doc.id}
                     />
-                    <div className="mt-4 ml-auto w-64 space-y-1 text-sm">
+                    <div className="mt-4 ml-auto w-72 space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Subtotal</span>
                         <span>{formatCurrency(doc.totals.subtotal)}</span>
                       </div>
                       {doc.totals.totalDiscount > 0 && (
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Diskon</span>
+                          <span className="text-muted-foreground">Diskon Item</span>
                           <span>-{formatCurrency(doc.totals.totalDiscount)}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground text-xs whitespace-nowrap">
+                          Diskon Total
+                        </span>
+                        <Input
+                          type="number"
+                          min={0}
+                          placeholder="0"
+                          className="h-7 text-sm"
+                          value={doc.globalDiscountValue ?? ""}
+                          onChange={(e) => {
+                            const v = e.target.value === "" ? undefined : Number(e.target.value);
+                            updateDoc({
+                              globalDiscountValue: v,
+                              globalDiscountType: doc.globalDiscountType ?? "amount",
+                            });
+                          }}
+                        />
+                        <Select
+                          value={doc.globalDiscountType ?? "amount"}
+                          onValueChange={(v) =>
+                            updateDoc({ globalDiscountType: v as "amount" | "percent" })
+                          }
+                        >
+                          <SelectTrigger className="h-7 w-20 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="amount">Rp</SelectItem>
+                            <SelectItem value="percent">%</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {(doc.totals.globalDiscount ?? 0) > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Diskon Total ({doc.globalDiscountType === "percent"
+                              ? `${doc.globalDiscountValue}%`
+                              : "nominal"})
+                          </span>
+                          <span>-{formatCurrency(doc.totals.globalDiscount ?? 0)}</span>
                         </div>
                       )}
                       {doc.totals.totalTax > 0 && (

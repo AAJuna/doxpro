@@ -13,8 +13,14 @@ export function calcItemTax(
   return round2((sub * item.taxRate) / 100);
 }
 
+export interface GlobalDiscount {
+  type: "amount" | "percent";
+  value: number;
+}
+
 export function calcTotals(
   items: Array<Pick<DocumentItem, "qty" | "price" | "discountPct" | "taxRate">>,
+  globalDiscount?: GlobalDiscount,
 ): DocumentTotals {
   let subtotal = 0;
   let totalDiscount = 0;
@@ -31,11 +37,26 @@ export function calcTotals(
     totalTax += tax;
   }
 
-  const grandTotal = subtotal - totalDiscount + totalTax;
+  // Diskon level dokumen = courtesy/promo discount post-tax.
+  // PPN tetap dihitung dari item (tidak adjust ke global discount) — kalau user
+  // butuh DPP-style adjustment (PPN ikut turun), gunakan diskon per-item.
+  // Cap di (subtotal - totalDiscount + totalTax) agar grand total tidak negatif.
+  const afterItemDiscount = subtotal - totalDiscount;
+  const baseForGlobal = afterItemDiscount + totalTax;
+  let globalDiscountAmount = 0;
+  if (globalDiscount && globalDiscount.value > 0) {
+    globalDiscountAmount =
+      globalDiscount.type === "percent"
+        ? (afterItemDiscount * globalDiscount.value) / 100
+        : Math.min(globalDiscount.value, baseForGlobal);
+  }
+
+  const grandTotal = afterItemDiscount + totalTax - globalDiscountAmount;
 
   return {
     subtotal: round2(subtotal),
     totalDiscount: round2(totalDiscount),
+    globalDiscount: round2(globalDiscountAmount),
     totalTax: round2(totalTax),
     grandTotal: round2(grandTotal),
   };

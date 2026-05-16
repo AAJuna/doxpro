@@ -59,6 +59,8 @@ export const documents = sqliteTable("documents", {
   paymentMethod: text("payment_method"),
   receivedFrom: text("received_from"),
   proposalContent: text("proposal_content"),
+  globalDiscountType: text("global_discount_type"),
+  globalDiscountValue: real("global_discount_value"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });

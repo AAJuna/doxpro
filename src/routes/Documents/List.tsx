@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X, Sparkles } from "lucide-react";
+import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X, Sparkles, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ import {
   nextDocumentSequence,
 } from "@/lib/db/queries";
 import { renderPdfBlob, downloadBlob, defaultFilename, renderPdfsToZip, bulkZipFilename } from "@/lib/pdf/generate";
+import { buildWhatsAppMessage, normalizePhoneForWA, openWhatsAppChat } from "@/lib/share";
 import { generateDocumentNumber } from "@/lib/calc";
 import { useAppStore } from "@/store/useAppStore";
 import { uuid, nowIso } from "@/lib/utils";
@@ -148,6 +149,27 @@ export function DocumentsList() {
     } catch (e) {
       toast.error("Gagal generate PDF: " + String(e));
     }
+  };
+
+  const sendWa = async (d: DocumentRecord) => {
+    const cmp = await getCompany();
+    const client = clients.find((c) => c.id === d.clientId);
+    if (!cmp || !client) {
+      toast.error("Data tidak lengkap");
+      return;
+    }
+    const sigs = await listSignatures();
+    const sig = d.signatureId ? sigs.find((s) => s.id === d.signatureId) : sigs.find((s) => s.isDefault);
+    try {
+      const blob = await renderPdfBlob(d, cmp, client, sig);
+      downloadBlob(blob, defaultFilename(d));
+    } catch (e) {
+      toast.error("Gagal generate PDF: " + String(e));
+      return;
+    }
+    const phone = normalizePhoneForWA(client.phone);
+    openWhatsAppChat(buildWhatsAppMessage(d, cmp, client), phone ?? undefined);
+    toast.success(phone ? "Chat WA dibuka" : "Pilih kontak WA manual");
   };
 
   const downloadSelectedAsZip = async () => {
@@ -410,12 +432,20 @@ export function DocumentsList() {
                 {
                   id: "actions",
                   header: "",
-                  headerClassName: "w-32",
+                  headerClassName: "w-40",
                   cell: (d) => (
                     <div
                       className="flex gap-1 justify-end"
                       onClick={(e) => e.stopPropagation()}
                     >
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => sendWa(d)}
+                        title="Kirim via WhatsApp"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="icon"
                         variant="ghost"

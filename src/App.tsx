@@ -6,6 +6,7 @@ import { Dashboard } from "@/routes/Dashboard";
 import { DocumentsList } from "@/routes/Documents/List";
 import { DocumentEditor } from "@/routes/Documents/Editor";
 import { Clients } from "@/routes/Clients";
+import { ClientDetail } from "@/routes/ClientDetail";
 import { Products } from "@/routes/Products";
 import { Signatures } from "@/routes/Signatures";
 import { Settings } from "@/routes/Settings";
@@ -62,6 +63,7 @@ export function App() {
         <Route path="/documents/new/:type" element={<DocumentEditor />} />
         <Route path="/documents/:id" element={<DocumentEditor />} />
         <Route path="/clients" element={<Clients />} />
+        <Route path="/clients/:id" element={<ClientDetail />} />
         <Route path="/products" element={<Products />} />
         <Route path="/signatures" element={<Signatures />} />
         <Route path="/settings" element={<Settings />} />

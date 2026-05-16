@@ -38,6 +38,7 @@ describe("calcTotals", () => {
     expect(calcTotals([])).toEqual({
       subtotal: 0,
       totalDiscount: 0,
+      globalDiscount: 0,
       totalTax: 0,
       grandTotal: 0,
     });
@@ -52,6 +53,38 @@ describe("calcTotals", () => {
     expect(t.totalDiscount).toBe(5000);
     expect(t.totalTax).toBe(26_950); // (200000 + 45000) * 11% = 245000 * 0.11
     expect(t.grandTotal).toBe(271_950);
+  });
+
+  it("global discount nominal (amount) = courtesy diskon post-tax", () => {
+    const t = calcTotals(
+      [{ qty: 1, price: 100000, discountPct: 0, taxRate: 11 }],
+      { type: "amount", value: 20000 },
+    );
+    // subtotal 100k, PPN 11k (per item, gak adjust), global discount 20k post-tax
+    // grand total = 100k + 11k - 20k = 91k
+    expect(t.subtotal).toBe(100000);
+    expect(t.totalTax).toBe(11000);
+    expect(t.globalDiscount).toBe(20000);
+    expect(t.grandTotal).toBe(91000);
+  });
+
+  it("global discount percent dihitung dari (subtotal - diskon item)", () => {
+    const t = calcTotals(
+      [{ qty: 2, price: 50000, discountPct: 0, taxRate: 0 }],
+      { type: "percent", value: 10 },
+    );
+    // subtotal 100k, 10% × 100k = 10k discount, no tax → grand 90k
+    expect(t.globalDiscount).toBe(10000);
+    expect(t.grandTotal).toBe(90000);
+  });
+
+  it("global discount amount di-cap agar grand total tidak negatif", () => {
+    const t = calcTotals(
+      [{ qty: 1, price: 50000, discountPct: 0, taxRate: 0 }],
+      { type: "amount", value: 999999 },
+    );
+    expect(t.globalDiscount).toBe(50000);
+    expect(t.grandTotal).toBe(0);
   });
 
   it("grand total = subtotal - discount + tax", () => {

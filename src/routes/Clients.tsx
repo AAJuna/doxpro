@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +28,7 @@ import type { Client } from "@/types";
 
 export function Clients() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
@@ -133,6 +135,7 @@ export function Clients() {
             <DataTable
               data={filtered}
               rowKey={(c) => c.id}
+              onRowClick={(c) => navigate(`/clients/${c.id}`)}
               initialSort={{ columnId: "name", direction: "asc" }}
               empty={
                 <EmptyState
@@ -185,7 +188,7 @@ export function Clients() {
                     header: "",
                     headerClassName: "w-24",
                     cell: (c) => (
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
                           <Edit className="h-4 w-4" />
                         </Button>

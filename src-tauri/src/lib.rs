@@ -15,6 +15,12 @@ pub fn run() {
             sql: include_str!("../../src/lib/db/migrations/0002_document_sequences.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "global_discount_columns",
+            sql: include_str!("../../src/lib/db/migrations/0003_global_discount.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
