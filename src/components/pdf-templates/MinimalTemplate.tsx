@@ -350,13 +350,13 @@ export function MinimalTemplate({ doc, company, client, signature }: PdfTemplate
           </Text>
         )}
 
-        {(doc.notes || doc.termsText) && (
+        {(doc.notes?.trim() || doc.termsText?.trim()) ? (
           <Text style={styles.notesBlock}>
-            {doc.notes ? doc.notes : ""}
-            {doc.notes && doc.termsText ? "\n\n" : ""}
-            {doc.termsText ? doc.termsText : ""}
+            {doc.notes?.trim() ? doc.notes : ""}
+            {doc.notes?.trim() && doc.termsText?.trim() ? "\n\n" : ""}
+            {doc.termsText?.trim() ? doc.termsText : ""}
           </Text>
-        )}
+        ) : null}
 
         {(c.showIntroClosing ?? true) && getClosingText(doc) ? (
           <Text style={styles.closing}>{getClosingText(doc)}</Text>

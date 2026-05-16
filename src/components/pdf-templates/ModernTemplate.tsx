@@ -404,19 +404,19 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
           </View>
         )}
 
-        {doc.notes && (
+        {doc.notes?.trim() ? (
           <View style={styles.notesBox}>
             <Text style={styles.notesLabel}>Catatan</Text>
             <Text style={styles.notesText}>{doc.notes}</Text>
           </View>
-        )}
+        ) : null}
 
-        {doc.termsText && (
+        {doc.termsText?.trim() ? (
           <View style={styles.notesBox}>
             <Text style={styles.notesLabel}>Syarat & Ketentuan</Text>
             <Text style={styles.notesText}>{doc.termsText}</Text>
           </View>
-        )}
+        ) : null}
 
         {(c.showIntroClosing ?? true) && getClosingText(doc) ? (
           <Text style={styles.closing}>{getClosingText(doc)}</Text>

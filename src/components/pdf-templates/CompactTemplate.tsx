@@ -290,12 +290,12 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
           </Text>
         )}
 
-        {(doc.notes || doc.termsText) && (
+        {(doc.notes?.trim() || doc.termsText?.trim()) ? (
           <Text style={styles.smallNote}>
-            {doc.notes ? "Catatan: " + doc.notes + "\n" : ""}
-            {doc.termsText ? "S&K: " + doc.termsText : ""}
+            {doc.notes?.trim() ? "Catatan: " + doc.notes + "\n" : ""}
+            {doc.termsText?.trim() ? "S&K: " + doc.termsText : ""}
           </Text>
-        )}
+        ) : null}
 
         {(doc.customizations.showIntroClosing ?? true) && getClosingText(doc, true) ? (
           <Text style={styles.closing}>{getClosingText(doc, true)}</Text>

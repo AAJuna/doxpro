@@ -270,6 +270,7 @@ export function PdfPreview({ doc, company, client, signature, onCustomizationsCh
             }
             return (
               <Document
+                key={url}
                 file={url}
                 onLoadSuccess={({ numPages: n }) => {
                   setNumPages(n);
