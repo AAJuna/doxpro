@@ -10,6 +10,7 @@ const styles: { id: TemplateStyle; label: string; desc: string }[] = [
   { id: "modern", label: "Modern", desc: "Bersih, banyak whitespace" },
   { id: "classic", label: "Classic", desc: "Formal Indonesia" },
   { id: "compact", label: "Compact", desc: "1 halaman hemat" },
+  { id: "minimal", label: "Minimal", desc: "Sangat clean, 1 accent" },
 ];
 
 const presetColors = ["#0f172a", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
@@ -32,7 +33,7 @@ export function TemplatePicker({ value, onChange }: Props) {
     <div className="space-y-3">
       <div className="space-y-1">
         <label className="text-xs font-medium text-muted-foreground uppercase">Style</label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {styles.map((s) => (
             <button
               key={s.id}
@@ -76,23 +77,76 @@ export function TemplatePicker({ value, onChange }: Props) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-sm">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={value.showLogo}
-            onChange={(e) => onChange({ ...value, showLogo: e.target.checked })}
-          />
-          Tampilkan Logo
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground uppercase">
+          Tampilan Elemen
         </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={value.showWatermark}
-            onChange={(e) => onChange({ ...value, showWatermark: e.target.checked })}
-          />
-          Watermark DRAFT
-        </label>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={value.showLogo}
+              onChange={(e) => onChange({ ...value, showLogo: e.target.checked })}
+            />
+            Logo
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={value.showWatermark}
+              onChange={(e) => onChange({ ...value, showWatermark: e.target.checked })}
+            />
+            Watermark DRAFT
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={value.showValidityCallout ?? true}
+              onChange={(e) =>
+                onChange({ ...value, showValidityCallout: e.target.checked })
+              }
+            />
+            Callout validity
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={value.showBankInfo ?? true}
+              onChange={(e) => onChange({ ...value, showBankInfo: e.target.checked })}
+            />
+            Info bank
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={value.showIntroClosing ?? true}
+              onChange={(e) =>
+                onChange({ ...value, showIntroClosing: e.target.checked })
+              }
+            />
+            Pembuka & penutup
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={value.showItemDiscountCol ?? false}
+              onChange={(e) =>
+                onChange({ ...value, showItemDiscountCol: e.target.checked })
+              }
+            />
+            Kolom Diskon % item
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={value.showItemTaxCol ?? false}
+              onChange={(e) =>
+                onChange({ ...value, showItemTaxCol: e.target.checked })
+              }
+            />
+            Kolom PPN % item
+          </label>
+        </div>
       </div>
 
       {value.showLogo && (

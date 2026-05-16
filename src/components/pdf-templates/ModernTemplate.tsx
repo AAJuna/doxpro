@@ -148,8 +148,9 @@ const styles = StyleSheet.create({
 });
 
 export function ModernTemplate({ doc, company, client, signature }: PdfTemplateProps) {
-  const accent = doc.customizations.primaryColor ?? "#0f172a";
-  const logoDim = logoBox(doc.customizations.logoSize);
+  const c = doc.customizations;
+  const accent = c.primaryColor ?? "#0f172a";
+  const logoDim = logoBox(c.logoSize);
   const logoPos = doc.customizations.logoPosition ?? "left";
   const logoAlignSelf =
     logoPos === "center" ? "center" : logoPos === "right" ? "flex-end" : "flex-start";
@@ -291,35 +292,55 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
           </View>
         )}
 
-        {getIntroText(doc) ? (
+        {(c.showIntroClosing ?? true) && getIntroText(doc) ? (
           <Text style={styles.intro}>{getIntroText(doc)}</Text>
         ) : null}
 
-        {(doc.type === "penawaran" || doc.type === "invoice") && (
-          <View style={styles.table}>
-            <View style={[styles.tableHeader, { borderBottomColor: accent }]}>
-              <Text style={[styles.tableHeaderText, styles.cellNo]}>#</Text>
-              <Text style={[styles.tableHeaderText, styles.cellName]}>Deskripsi</Text>
-              <Text style={[styles.tableHeaderText, styles.cellQty]}>Qty</Text>
-              <Text style={[styles.tableHeaderText, styles.cellPrice]}>Harga</Text>
-              <Text style={[styles.tableHeaderText, styles.cellTotal]}>Subtotal</Text>
-            </View>
-            {doc.items.map((it, i) => (
-              <View key={it.id} style={styles.tableRow}>
-                <Text style={styles.cellNo}>{i + 1}</Text>
-                <View style={styles.cellName}>
-                  <Text>{it.name}</Text>
-                  {it.description ? <Text style={styles.itemDesc}>{it.description}</Text> : null}
-                </View>
-                <Text style={styles.cellQty}>
-                  {it.qty} {it.unit}
-                </Text>
-                <Text style={styles.cellPrice}>{formatCurrency(it.price)}</Text>
-                <Text style={styles.cellTotal}>{formatCurrency(it.subtotal)}</Text>
+        {(doc.type === "penawaran" || doc.type === "invoice") && (() => {
+          const showDisc = c.showItemDiscountCol ?? false;
+          const showTax = c.showItemTaxCol ?? false;
+          const extraCols = (showDisc ? 1 : 0) + (showTax ? 1 : 0);
+          // Resize main columns saat ada extra (kompresi proporsional)
+          const namePct = 42 - extraCols * 5;
+          const extraColStyle = { width: "8%", textAlign: "right" as const };
+          return (
+            <View style={styles.table}>
+              <View style={[styles.tableHeader, { borderBottomColor: accent }]}>
+                <Text style={[styles.tableHeaderText, styles.cellNo]}>#</Text>
+                <Text style={[styles.tableHeaderText, { width: `${namePct}%` }]}>Deskripsi</Text>
+                <Text style={[styles.tableHeaderText, styles.cellQty]}>Qty</Text>
+                <Text style={[styles.tableHeaderText, styles.cellPrice]}>Harga</Text>
+                {showDisc ? (
+                  <Text style={[styles.tableHeaderText, extraColStyle]}>Disc%</Text>
+                ) : null}
+                {showTax ? (
+                  <Text style={[styles.tableHeaderText, extraColStyle]}>PPN%</Text>
+                ) : null}
+                <Text style={[styles.tableHeaderText, styles.cellTotal]}>Subtotal</Text>
               </View>
-            ))}
-          </View>
-        )}
+              {doc.items.map((it, i) => (
+                <View key={it.id} style={styles.tableRow}>
+                  <Text style={styles.cellNo}>{i + 1}</Text>
+                  <View style={{ width: `${namePct}%` }}>
+                    <Text>{it.name}</Text>
+                    {it.description ? <Text style={styles.itemDesc}>{it.description}</Text> : null}
+                  </View>
+                  <Text style={styles.cellQty}>
+                    {it.qty} {it.unit}
+                  </Text>
+                  <Text style={styles.cellPrice}>{formatCurrency(it.price)}</Text>
+                  {showDisc ? (
+                    <Text style={extraColStyle}>{it.discountPct > 0 ? `${it.discountPct}%` : "—"}</Text>
+                  ) : null}
+                  {showTax ? (
+                    <Text style={extraColStyle}>{it.taxRate > 0 ? `${it.taxRate}%` : "—"}</Text>
+                  ) : null}
+                  <Text style={styles.cellTotal}>{formatCurrency(it.subtotal)}</Text>
+                </View>
+              ))}
+            </View>
+          );
+        })()}
 
         {(doc.type === "penawaran" || doc.type === "invoice") && (
           <View style={styles.totalsBox}>
@@ -357,7 +378,8 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
           </View>
         )}
 
-        {(doc.type === "penawaran" || doc.type === "proposal") && doc.validUntil && (
+        {(c.showValidityCallout ?? true) &&
+          (doc.type === "penawaran" || doc.type === "proposal") && doc.validUntil && (
           <View style={[styles.validityCallout, { borderLeftColor: accent, backgroundColor: accent + "10" }]}>
             <View>
               <Text style={[styles.validityTitle, { color: accent }]}>
@@ -371,7 +393,7 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
           </View>
         )}
 
-        {doc.type === "invoice" && company.bankName && company.bankAccount && (
+        {(c.showBankInfo ?? true) && doc.type === "invoice" && company.bankName && company.bankAccount && (
           <View style={[styles.bankBox, { borderLeftColor: accent }]}>
             <Text style={styles.bankTitle}>Instruksi Pembayaran</Text>
             <Text style={styles.bankText}>
@@ -396,7 +418,7 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
           </View>
         )}
 
-        {getClosingText(doc) ? (
+        {(c.showIntroClosing ?? true) && getClosingText(doc) ? (
           <Text style={styles.closing}>{getClosingText(doc)}</Text>
         ) : null}
 

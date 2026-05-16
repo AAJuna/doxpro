@@ -209,7 +209,7 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
           </View>
         )}
 
-        {getIntroText(doc, true) ? (
+        {(doc.customizations.showIntroClosing ?? true) && getIntroText(doc, true) ? (
           <Text style={styles.intro}>{getIntroText(doc, true)}</Text>
         ) : null}
 
@@ -273,7 +273,8 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
           </View>
         )}
 
-        {(doc.type === "penawaran" || doc.type === "proposal") && doc.validUntil && (
+        {(doc.customizations.showValidityCallout ?? true) &&
+          (doc.type === "penawaran" || doc.type === "proposal") && doc.validUntil && (
           <View style={[styles.validityNote, { borderLeftColor: accent, backgroundColor: accent + "10" }]}>
             <Text style={{ fontSize: 8, fontWeight: 700, color: accent }}>
               {doc.type === "penawaran" ? "Berlaku sampai" : "Proposal berlaku s.d."} {formatDate(doc.validUntil)} · Mohon konfirmasi sebelum tanggal tersebut
@@ -281,7 +282,8 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
           </View>
         )}
 
-        {doc.type === "invoice" && company.bankName && (
+        {(doc.customizations.showBankInfo ?? true) &&
+          doc.type === "invoice" && company.bankName && (
           <Text style={styles.smallNote}>
             Pembayaran: {company.bankName} · {company.bankAccount} · A/N{" "}
             {company.bankHolder ?? company.name}
@@ -295,7 +297,7 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
           </Text>
         )}
 
-        {getClosingText(doc, true) ? (
+        {(doc.customizations.showIntroClosing ?? true) && getClosingText(doc, true) ? (
           <Text style={styles.closing}>{getClosingText(doc, true)}</Text>
         ) : null}
 

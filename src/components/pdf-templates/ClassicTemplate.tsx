@@ -261,7 +261,7 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
               );
             })() : (
               <>
-                {getIntroText(doc) ? (
+                {(doc.customizations.showIntroClosing ?? true) && getIntroText(doc) ? (
                   <Text style={styles.intro}>{getIntroText(doc)}</Text>
                 ) : null}
               <View style={styles.table}>
@@ -324,7 +324,8 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
               </View>
             )}
 
-            {(doc.type === "penawaran" || doc.type === "proposal") && doc.validUntil && (
+            {(doc.customizations.showValidityCallout ?? true) &&
+              (doc.type === "penawaran" || doc.type === "proposal") && doc.validUntil && (
               <View style={styles.validityCallout}>
                 <Text style={styles.validityTitle}>
                   {doc.type === "penawaran" ? "PENAWARAN BERLAKU SAMPAI" : "PROPOSAL BERLAKU SAMPAI"}
@@ -336,7 +337,8 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
               </View>
             )}
 
-            {doc.type === "invoice" && company.bankName && (
+            {(doc.customizations.showBankInfo ?? true) &&
+              doc.type === "invoice" && company.bankName && (
               <View style={styles.bankBox}>
                 <Text style={styles.notesLabel}>Pembayaran:</Text>
                 <Text style={styles.notesText}>
@@ -361,7 +363,7 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
           </View>
         )}
 
-        {getClosingText(doc) ? (
+        {(doc.customizations.showIntroClosing ?? true) && getClosingText(doc) ? (
           <Text style={styles.closing}>{getClosingText(doc)}</Text>
         ) : null}
 

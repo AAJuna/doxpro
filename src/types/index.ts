@@ -9,7 +9,7 @@ export type DocumentStatus =
   | "accepted"
   | "rejected";
 
-export type TemplateStyle = "classic" | "modern" | "compact";
+export type TemplateStyle = "classic" | "modern" | "compact" | "minimal";
 
 export type Currency = "IDR" | "USD" | "EUR" | "SGD" | "MYR";
 
@@ -85,6 +85,11 @@ export interface DocumentCustomizations {
   showWatermark: boolean;
   logoSize?: LogoSize;
   logoPosition?: LogoPosition;
+  showValidityCallout?: boolean;
+  showBankInfo?: boolean;
+  showIntroClosing?: boolean;
+  showItemDiscountCol?: boolean;
+  showItemTaxCol?: boolean;
 }
 
 export interface DocumentRecord {

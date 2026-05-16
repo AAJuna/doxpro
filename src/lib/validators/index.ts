@@ -59,7 +59,7 @@ export const documentSchema = z
     proposalContent: z.string().optional(),
     items: z.array(documentItemSchema).default([]),
     customizations: z.object({
-      style: z.enum(["classic", "modern", "compact"]),
+      style: z.enum(["classic", "modern", "compact", "minimal"]),
       primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
       fontFamily: z.string(),
       headerLayout: z.enum(["left", "center", "right"]),
@@ -67,6 +67,11 @@ export const documentSchema = z
       showWatermark: z.boolean(),
       logoSize: z.enum(["S", "M", "L", "XL"]).optional(),
       logoPosition: z.enum(["left", "center", "right"]).optional(),
+      showValidityCallout: z.boolean().optional(),
+      showBankInfo: z.boolean().optional(),
+      showIntroClosing: z.boolean().optional(),
+      showItemDiscountCol: z.boolean().optional(),
+      showItemTaxCol: z.boolean().optional(),
     }),
   })
   .refine((d) => !d.validUntil || d.validUntil >= d.date, {
