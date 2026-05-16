@@ -27,6 +27,12 @@ pub fn run() {
             sql: include_str!("../../src/lib/db/migrations/0004_intro_closing.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "document_templates",
+            sql: include_str!("../../src/lib/db/migrations/0005_document_templates.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

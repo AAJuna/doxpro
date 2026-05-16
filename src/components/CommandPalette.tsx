@@ -200,6 +200,9 @@ export function CommandPalette() {
           <CommandItem onSelect={run(() => navigate("/products"))}>
             <Package /> Produk / Jasa
           </CommandItem>
+          <CommandItem onSelect={run(() => navigate("/templates"))}>
+            <ClipboardList /> Template
+          </CommandItem>
           <CommandItem onSelect={run(() => navigate("/signatures"))}>
             <PenTool /> Tanda Tangan
           </CommandItem>

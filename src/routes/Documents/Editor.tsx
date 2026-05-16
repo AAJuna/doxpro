@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Download, FileText, Send, ArrowRight, FileCheck } from "lucide-react";
+import { ArrowLeft, Save, Download, FileText, Send, ArrowRight, FileCheck, BookmarkPlus } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,6 +18,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ItemsTable } from "@/components/document-editor/ItemsTable";
 import { TemplatePicker } from "@/components/document-editor/TemplatePicker";
 import { PdfPreview } from "@/components/document-preview/PdfPreview";
@@ -31,6 +39,8 @@ import {
   listProducts,
   listSignatures,
   getCompany,
+  getTemplate,
+  saveTemplate,
   nextDocumentSequence,
 } from "@/lib/db/queries";
 import { renderPdfBlob, downloadBlob, defaultFilename } from "@/lib/pdf/generate";
@@ -50,11 +60,16 @@ const docTitle: Record<DocumentType, string> = {
 
 export function DocumentEditor() {
   const { id, type: typeParam } = useParams<{ id?: string; type?: DocumentType }>();
+  const [searchParams] = useSearchParams();
+  const templateId = searchParams.get("template");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const company = useAppStore((s) => s.company)!;
   const settings = useAppStore((s) => s.settings);
   const isNew = !id;
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
 
   const { data: existing } = useQuery({
     queryKey: ["document", id],
@@ -78,11 +93,13 @@ export function DocumentEditor() {
       const today = new Date();
       (async () => {
         const c = await getCompany();
+        const template = templateId ? await getTemplate(templateId) : null;
         const seq = await nextDocumentSequence(typeParam, today.getFullYear(), today.getMonth() + 1);
         const number = generateDocumentNumber(settings.numberingScheme, typeParam, seq, today);
 
+        const newDocId = uuid();
         const newDoc: DocumentRecord = {
-          id: uuid(),
+          id: newDocId,
           type: typeParam,
           number,
           date: today.toISOString().slice(0, 10),
@@ -95,7 +112,7 @@ export function DocumentEditor() {
           clientId: "",
           status: "draft",
           totals: { subtotal: 0, totalDiscount: 0, totalTax: 0, grandTotal: 0 },
-          customizations: {
+          customizations: template?.customizations ?? {
             style: "modern",
             primaryColor: c?.defaultColor ?? "#0f172a",
             fontFamily: c?.defaultFont ?? "Inter",
@@ -105,16 +122,26 @@ export function DocumentEditor() {
             logoSize: "M",
             logoPosition: "left",
           },
-          notes: "",
-          termsText: "",
+          notes: template?.notes ?? "",
+          termsText: template?.termsText ?? "",
+          introText: template?.introText,
+          closingText: template?.closingText,
+          globalDiscountType: template?.globalDiscountType,
+          globalDiscountValue: template?.globalDiscountValue,
+          paymentMethod: template?.paymentMethod,
           createdAt: nowIso(),
           updatedAt: nowIso(),
-          items: [],
+          items: template
+            ? template.items.map((it) => ({ ...it, id: uuid(), documentId: newDocId }))
+            : [],
         };
         setDoc(newDoc);
+        if (template) {
+          toast.success(`Template "${template.name}" diterapkan`);
+        }
       })();
     }
-  }, [existing, isNew, typeParam, settings.numberingScheme]);
+  }, [existing, isNew, typeParam, settings.numberingScheme, templateId]);
 
   const currentClient = useMemo(() => {
     return clients.find((c) => c.id === doc?.clientId) ?? null;
@@ -238,6 +265,49 @@ export function DocumentEditor() {
       toast.success("PDF diunduh");
     } catch (e) {
       toast.error("Gagal generate PDF: " + String(e));
+    }
+  };
+
+  const handleSaveAsTemplate = async () => {
+    if (!doc) return;
+    if (!templateName.trim()) {
+      toast.error("Nama template wajib diisi");
+      return;
+    }
+    setSavingTemplate(true);
+    try {
+      // Strip per-document fields, keep template-relevant only
+      await saveTemplate({
+        name: templateName.trim(),
+        type: doc.type,
+        items: doc.items.map((it) => ({
+          productId: it.productId,
+          name: it.name,
+          description: it.description,
+          qty: it.qty,
+          unit: it.unit,
+          price: it.price,
+          taxRate: it.taxRate,
+          discountPct: it.discountPct,
+          subtotal: it.subtotal,
+        })),
+        customizations: doc.customizations,
+        notes: doc.notes,
+        termsText: doc.termsText,
+        introText: doc.introText,
+        closingText: doc.closingText,
+        globalDiscountType: doc.globalDiscountType,
+        globalDiscountValue: doc.globalDiscountValue,
+        paymentMethod: doc.paymentMethod,
+      });
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast.success(`Template "${templateName.trim()}" tersimpan`);
+      setTemplateDialogOpen(false);
+      setTemplateName("");
+    } catch (e) {
+      toast.error("Gagal simpan template: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setSavingTemplate(false);
     }
   };
 
@@ -381,6 +451,9 @@ export function DocumentEditor() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setTemplateDialogOpen(true)} title="Simpan sebagai template reusable">
+            <BookmarkPlus className="h-4 w-4" /> Save as Template
+          </Button>
           {(doc.type === "penawaran" || doc.type === "proposal") && (
             <Button variant="outline" onClick={handleConvertToInvoice}>
               <ArrowRight className="h-4 w-4" /> Convert ke Invoice
@@ -752,6 +825,45 @@ export function DocumentEditor() {
           )}
         </div>
       </div>
+
+      <Dialog
+        open={templateDialogOpen}
+        onOpenChange={(o) => {
+          setTemplateDialogOpen(o);
+          if (!o) setTemplateName("");
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Simpan sebagai Template</DialogTitle>
+            <DialogDescription>
+              Template menyimpan items, customization, dan copy (catatan/syarat/intro/closing).
+              Klien, nomor, dan tanggal akan diisi ulang tiap pembuatan dokumen baru.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2 space-y-2">
+            <Label>Nama Template</Label>
+            <Input
+              autoFocus
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder="Contoh: Paket Konsultasi 5 Jam"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && templateName.trim()) handleSaveAsTemplate();
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTemplateDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleSaveAsTemplate} disabled={savingTemplate || !templateName.trim()}>
+              <BookmarkPlus className="h-4 w-4" />
+              {savingTemplate ? "Menyimpan..." : "Simpan Template"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

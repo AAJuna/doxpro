@@ -82,6 +82,23 @@ export const documentItems = sqliteTable("document_items", {
   sortOrder: integer("sort_order").notNull().default(0),
 });
 
+export const documentTemplates = sqliteTable("document_templates", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  itemsJson: text("items_json").notNull().default("[]"),
+  customizationsJson: text("customizations_json").notNull(),
+  notes: text("notes"),
+  termsText: text("terms_text"),
+  introText: text("intro_text"),
+  closingText: text("closing_text"),
+  globalDiscountType: text("global_discount_type"),
+  globalDiscountValue: real("global_discount_value"),
+  paymentMethod: text("payment_method"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 export const signatures = sqliteTable("signatures", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

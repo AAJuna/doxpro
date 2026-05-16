@@ -8,6 +8,7 @@ import type {
   DocumentItem,
   DocumentTotals,
   DocumentCustomizations,
+  DocumentTemplate,
   Signature,
   DocumentType,
   DocumentStatus,
@@ -417,6 +418,100 @@ export async function nextDocumentSequence(type: DocumentType, year: number, mon
     [type, ym],
   );
   return rows[0]?.next_seq ?? 1;
+}
+
+// ---------- Document Templates ----------
+function mapTemplate(r: Row): DocumentTemplate {
+  return {
+    id: r.id as string,
+    name: r.name as string,
+    type: r.type as DocumentType,
+    items: safeJsonParse<DocumentTemplate["items"]>(r.items_json, [], `templates.items_json id=${r.id}`),
+    customizations: safeJsonParse<DocumentCustomizations>(
+      r.customizations_json,
+      EMPTY_CUSTOMIZATIONS,
+      `templates.customizations_json id=${r.id}`,
+    ),
+    notes: (r.notes ?? undefined) as string | undefined,
+    termsText: (r.terms_text ?? undefined) as string | undefined,
+    introText: (r.intro_text ?? undefined) as string | undefined,
+    closingText: (r.closing_text ?? undefined) as string | undefined,
+    globalDiscountType: (r.global_discount_type ?? undefined) as "amount" | "percent" | undefined,
+    globalDiscountValue: (r.global_discount_value ?? undefined) as number | undefined,
+    paymentMethod: (r.payment_method ?? undefined) as string | undefined,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+export async function listTemplates(type?: DocumentType): Promise<DocumentTemplate[]> {
+  const rows = type
+    ? await select<Row>("SELECT * FROM document_templates WHERE type=? ORDER BY name ASC", [type])
+    : await select<Row>("SELECT * FROM document_templates ORDER BY type ASC, name ASC");
+  return rows.map(mapTemplate);
+}
+
+export async function getTemplate(id: string): Promise<DocumentTemplate | null> {
+  const rows = await select<Row>("SELECT * FROM document_templates WHERE id=?", [id]);
+  return rows[0] ? mapTemplate(rows[0]) : null;
+}
+
+export async function saveTemplate(
+  input: Omit<DocumentTemplate, "id" | "createdAt" | "updatedAt"> & { id?: string },
+): Promise<DocumentTemplate> {
+  const now = nowIso();
+  if (input.id) {
+    await execute(
+      `UPDATE document_templates SET name=?, type=?, items_json=?, customizations_json=?,
+       notes=?, terms_text=?, intro_text=?, closing_text=?, global_discount_type=?,
+       global_discount_value=?, payment_method=?, updated_at=? WHERE id=?`,
+      [
+        input.name,
+        input.type,
+        JSON.stringify(input.items),
+        JSON.stringify(input.customizations),
+        input.notes ?? null,
+        input.termsText ?? null,
+        input.introText ?? null,
+        input.closingText ?? null,
+        input.globalDiscountType ?? null,
+        input.globalDiscountValue ?? null,
+        input.paymentMethod ?? null,
+        now,
+        input.id,
+      ],
+    );
+    const existing = await getTemplate(input.id);
+    return existing!;
+  }
+  const id = uuid();
+  await execute(
+    `INSERT INTO document_templates (id, name, type, items_json, customizations_json,
+     notes, terms_text, intro_text, closing_text, global_discount_type,
+     global_discount_value, payment_method, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      input.name,
+      input.type,
+      JSON.stringify(input.items),
+      JSON.stringify(input.customizations),
+      input.notes ?? null,
+      input.termsText ?? null,
+      input.introText ?? null,
+      input.closingText ?? null,
+      input.globalDiscountType ?? null,
+      input.globalDiscountValue ?? null,
+      input.paymentMethod ?? null,
+      now,
+      now,
+    ],
+  );
+  return { ...input, id, createdAt: now, updatedAt: now };
+}
+
+export async function deleteTemplate(id: string): Promise<void> {
+  await execute("DELETE FROM document_templates WHERE id=?", [id]);
 }
 
 // ---------- Signatures ----------

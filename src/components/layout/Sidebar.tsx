@@ -6,6 +6,7 @@ import {
   Package,
   Settings,
   PenLine,
+  ClipboardList,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -22,6 +23,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/documents", label: "Dokumen", icon: FileText },
+  { to: "/templates", label: "Template", icon: ClipboardList },
   { to: "/clients", label: "Klien", icon: Users },
   { to: "/products", label: "Produk & Jasa", icon: Package },
   { to: "/signatures", label: "Tanda Tangan", icon: PenLine },

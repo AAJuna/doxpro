@@ -125,6 +125,28 @@ export interface Signature {
   isDefault: boolean;
 }
 
+/**
+ * Template dokumen reusable. Berisi struktur yang berulang (items, customization,
+ * copy), tanpa data klien/tanggal yang harus diisi per pembuatan dokumen.
+ */
+export interface DocumentTemplate {
+  id: string;
+  name: string;
+  type: DocumentType;
+  /** Items tanpa id/documentId (akan di-generate baru saat apply) */
+  items: Array<Omit<DocumentItem, "id" | "documentId">>;
+  customizations: DocumentCustomizations;
+  notes?: string;
+  termsText?: string;
+  introText?: string;
+  closingText?: string;
+  globalDiscountType?: "amount" | "percent";
+  globalDiscountValue?: number;
+  paymentMethod?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AppSettings {
   defaultCurrency: Currency;
   defaultTaxRate: number;

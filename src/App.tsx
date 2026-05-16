@@ -8,6 +8,7 @@ import { DocumentEditor } from "@/routes/Documents/Editor";
 import { Clients } from "@/routes/Clients";
 import { ClientDetail } from "@/routes/ClientDetail";
 import { Products } from "@/routes/Products";
+import { Templates } from "@/routes/Templates";
 import { Signatures } from "@/routes/Signatures";
 import { Settings } from "@/routes/Settings";
 import { useAppStore } from "@/store/useAppStore";
@@ -65,6 +66,7 @@ export function App() {
         <Route path="/clients" element={<Clients />} />
         <Route path="/clients/:id" element={<ClientDetail />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/templates" element={<Templates />} />
         <Route path="/signatures" element={<Signatures />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />

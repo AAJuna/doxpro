@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X, Sparkles, Send, FileSpreadsheet } from "lucide-react";
+import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X, Sparkles, Send, FileSpreadsheet, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ import {
   saveDocument,
   listClients,
   listSignatures,
+  listTemplates,
   getCompany,
   nextDocumentSequence,
 } from "@/lib/db/queries";
@@ -95,6 +96,7 @@ export function DocumentsList() {
   });
 
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: listClients });
+  const { data: templates = [] } = useQuery({ queryKey: ["templates"], queryFn: () => listTemplates() });
 
   const deleteMutation = useMutation({
     mutationFn: deleteDocument,
@@ -254,6 +256,33 @@ export function DocumentsList() {
           >
             <FileSpreadsheet className="h-4 w-4" /> Export Excel
           </Button>
+          {templates.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <ClipboardList className="h-4 w-4" /> Dari Template
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-w-xs">
+                {templates.slice(0, 10).map((t) => (
+                  <DropdownMenuItem
+                    key={t.id}
+                    onClick={() => navigate(`/documents/new/${t.type}?template=${t.id}`)}
+                  >
+                    {t.name}
+                    <span className="ml-auto text-xs text-muted-foreground capitalize">
+                      {t.type}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+                {templates.length > 10 ? (
+                  <DropdownMenuItem onClick={() => navigate("/templates")}>
+                    Lihat semua ({templates.length})
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button>
