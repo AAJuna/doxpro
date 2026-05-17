@@ -12,6 +12,10 @@ const styles: { id: TemplateStyle; label: string; desc: string }[] = [
   { id: "compact", label: "Compact", desc: "1 halaman hemat" },
   { id: "minimal", label: "Minimal", desc: "Sangat clean, 1 accent" },
   { id: "branded", label: "Branded Hero", desc: "Banner besar, agency vibe" },
+  { id: "service", label: "Service", desc: "Card-style items, freelancer" },
+  { id: "bilingual", label: "Bilingual", desc: "Label ID/EN parallel" },
+  { id: "construction", label: "Construction", desc: "Termin DP/Progress/Pelunasan" },
+  { id: "retail", label: "Retail Receipt", desc: "Narrow 80mm thermal-style" },
 ];
 
 const presetColors = ["#0f172a", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
