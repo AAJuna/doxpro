@@ -1,6 +1,7 @@
 import { Page, Document, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import type { PdfTemplateProps } from "./types";
 import { docLabel } from "./labels";
+import { BrandingFooter } from "./BrandingFooter";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 /**
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
   kTerb: { fontSize: 7, fontStyle: "italic", marginTop: 4, textAlign: "center" },
 });
 
-export function RetailReceiptTemplate({ doc, company, client, signature: _ }: PdfTemplateProps) {
+export function RetailReceiptTemplate({ doc, company, client, signature: _, showBranding = true }: PdfTemplateProps) {
   const c = doc.customizations;
   const showLogo = c.showLogo && company.logoPath;
 
@@ -186,7 +187,7 @@ export function RetailReceiptTemplate({ doc, company, client, signature: _ }: Pd
         ) : null}
 
         <Text style={styles.footer}>~ Terima Kasih ~</Text>
-        <Text style={styles.footer}>doxpro.id</Text>
+        <BrandingFooter show={showBranding} />
       </Page>
     </Document>
   );

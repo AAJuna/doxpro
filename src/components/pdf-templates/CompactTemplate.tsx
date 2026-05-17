@@ -3,6 +3,7 @@ import type { PdfTemplateProps } from "./types";
 import { docLabel } from "./labels";
 import { parseProposalSections } from "./proposalSections";
 import { getClosingText, getIntroText } from "./copy";
+import { BrandingFooter } from "./BrandingFooter";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 const styles = StyleSheet.create({
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export function CompactTemplate({ doc, company, client, signature }: PdfTemplateProps) {
+export function CompactTemplate({ doc, company, client, signature, showBranding = true }: PdfTemplateProps) {
   const accent = doc.customizations.primaryColor ?? "#0f172a";
   return (
     <Document>
@@ -314,6 +315,7 @@ export function CompactTemplate({ doc, company, client, signature }: PdfTemplate
             </View>
           </View>
         </View>
+        <BrandingFooter show={showBranding} />
       </Page>
     </Document>
   );

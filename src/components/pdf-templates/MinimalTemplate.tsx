@@ -4,6 +4,7 @@ import { docLabel } from "./labels";
 import { logoBox } from "./logoSize";
 import { parseProposalSections } from "./proposalSections";
 import { getClosingText, getIntroText } from "./copy";
+import { BrandingFooter } from "./BrandingFooter";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 const styles = StyleSheet.create({
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
   pBody: { fontSize: 10, lineHeight: 1.55, color: "#374151" },
 });
 
-export function MinimalTemplate({ doc, company, client, signature }: PdfTemplateProps) {
+export function MinimalTemplate({ doc, company, client, signature, showBranding = true }: PdfTemplateProps) {
   const c = doc.customizations;
   const accent = c.primaryColor ?? "#111827";
   const logoDim = logoBox(c.logoSize, "S");
@@ -378,6 +379,7 @@ export function MinimalTemplate({ doc, company, client, signature }: PdfTemplate
             </View>
           </View>
         )}
+        <BrandingFooter show={showBranding} />
       </Page>
     </Document>
   );

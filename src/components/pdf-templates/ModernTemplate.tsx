@@ -4,6 +4,7 @@ import { docLabel } from "./labels";
 import { logoBox } from "./logoSize";
 import { parseProposalSections } from "./proposalSections";
 import { getClosingText, getIntroText } from "./copy";
+import { BrandingFooter } from "./BrandingFooter";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 const styles = StyleSheet.create({
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export function ModernTemplate({ doc, company, client, signature }: PdfTemplateProps) {
+export function ModernTemplate({ doc, company, client, signature, showBranding = true }: PdfTemplateProps) {
   const c = doc.customizations;
   const accent = c.primaryColor ?? "#0f172a";
   const logoDim = logoBox(c.logoSize);
@@ -437,9 +438,10 @@ export function ModernTemplate({ doc, company, client, signature }: PdfTemplateP
           </View>
         </View>
 
-        <Text style={styles.footer}>
-          Dokumen dibuat dengan doxpro · {company.website ?? ""}
-        </Text>
+        {company.website ? (
+          <Text style={styles.footer}>{company.website}</Text>
+        ) : null}
+        <BrandingFooter show={showBranding} />
       </Page>
     </Document>
   );

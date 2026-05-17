@@ -32,6 +32,7 @@ import {
   nextDocumentSequence,
 } from "@/lib/db/queries";
 import { renderPdfBlob, downloadBlob, defaultFilename, renderPdfsToZip, bulkZipFilename } from "@/lib/pdf/generate";
+import { useFeature } from "@/lib/auth/session";
 import { buildWhatsAppMessage, normalizePhoneForWA, openWhatsAppChat } from "@/lib/share";
 import { exportDocumentsToExcel } from "@/lib/excel";
 import { generateDocumentNumber } from "@/lib/calc";
@@ -60,6 +61,7 @@ const typeLabel: Record<DocumentType, string> = {
 export function DocumentsList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const canRemoveBranding = useFeature("watermark.remove");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | DocumentType>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | DocumentStatus>("all");
@@ -147,7 +149,9 @@ export function DocumentsList() {
       return;
     }
     try {
-      const blob = await renderPdfBlob(d, company, client, sig);
+      const blob = await renderPdfBlob(d, company, client, sig, {
+        showBranding: !canRemoveBranding,
+      });
       downloadBlob(blob, defaultFilename(d));
     } catch (e) {
       toast.error("Gagal generate PDF: " + String(e));
@@ -164,7 +168,9 @@ export function DocumentsList() {
     const sigs = await listSignatures();
     const sig = d.signatureId ? sigs.find((s) => s.id === d.signatureId) : sigs.find((s) => s.isDefault);
     try {
-      const blob = await renderPdfBlob(d, cmp, client, sig);
+      const blob = await renderPdfBlob(d, cmp, client, sig, {
+        showBranding: !canRemoveBranding,
+      });
       downloadBlob(blob, defaultFilename(d));
     } catch (e) {
       toast.error("Gagal generate PDF: " + String(e));
@@ -205,8 +211,11 @@ export function DocumentsList() {
 
     setBulkProgress({ done: 0, total: entries.length });
     try {
-      const blob = await renderPdfsToZip(entries, company, (done, total) =>
-        setBulkProgress({ done, total }),
+      const blob = await renderPdfsToZip(
+        entries,
+        company,
+        (done, total) => setBulkProgress({ done, total }),
+        { showBranding: !canRemoveBranding },
       );
       downloadBlob(blob, bulkZipFilename());
       toast.success(`${entries.length} PDF di-pack jadi ZIP`);

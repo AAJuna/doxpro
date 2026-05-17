@@ -3,6 +3,7 @@ import type { PdfTemplateProps } from "./types";
 import { docLabel, docLabelEn } from "./labels";
 import { logoBox } from "./logoSize";
 import { parseProposalSections } from "./proposalSections";
+import { BrandingFooter } from "./BrandingFooter";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 const styles = StyleSheet.create({
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export function BilingualTemplate({ doc, company, client, signature }: PdfTemplateProps) {
+export function BilingualTemplate({ doc, company, client, signature, showBranding = true }: PdfTemplateProps) {
   const c = doc.customizations;
   const accent = c.primaryColor ?? "#0f172a";
   const logoDim = logoBox(c.logoSize);
@@ -388,6 +389,7 @@ export function BilingualTemplate({ doc, company, client, signature }: PdfTempla
             </View>
           </View>
         ) : null}
+        <BrandingFooter show={showBranding} />
       </Page>
     </Document>
   );

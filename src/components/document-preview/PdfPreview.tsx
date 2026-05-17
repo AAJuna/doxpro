@@ -22,6 +22,7 @@ import { PdfTemplate } from "@/components/pdf-templates";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useFeature } from "@/lib/auth/session";
 import type {
   Company,
   Client,
@@ -72,12 +73,21 @@ export function PdfPreview({ doc, company, client, signature, onCustomizationsCh
     setZoom(next);
   };
 
+  // Pro tier removes the "Dibuat dengan doxpro" footer; Free always shows it.
+  const canRemoveBranding = useFeature("watermark.remove");
+
   // Memoize the JSX so BlobProvider only re-renders blob when doc/company/client/signature changes
   const pdfDoc = useMemo(
     () => (
-      <PdfTemplate doc={doc} company={company} client={client!} signature={signature} />
+      <PdfTemplate
+        doc={doc}
+        company={company}
+        client={client!}
+        signature={signature}
+        showBranding={!canRemoveBranding}
+      />
     ),
-    [doc, company, client, signature],
+    [doc, company, client, signature, canRemoveBranding],
   );
 
   if (!client) {

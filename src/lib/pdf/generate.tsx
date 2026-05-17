@@ -3,14 +3,29 @@ import JSZip from "jszip";
 import { PdfTemplate } from "@/components/pdf-templates";
 import type { Company, Client, DocumentRecord, Signature } from "@/types";
 
+export interface RenderPdfOptions {
+  /**
+   * Show the "Dibuat dengan doxpro" footer. Default true (Free tier).
+   * Pass false from Pro callers (`hasFeature(tier, "watermark.remove")`).
+   */
+  showBranding?: boolean;
+}
+
 export async function renderPdfBlob(
   doc: DocumentRecord,
   company: Company,
   client: Client,
   signature?: Signature | null,
+  opts?: RenderPdfOptions,
 ): Promise<Blob> {
   const instance = pdf(
-    <PdfTemplate doc={doc} company={company} client={client} signature={signature} />,
+    <PdfTemplate
+      doc={doc}
+      company={company}
+      client={client}
+      signature={signature}
+      showBranding={opts?.showBranding ?? true}
+    />,
   );
   return instance.toBlob();
 }
@@ -46,11 +61,12 @@ export async function renderPdfsToZip(
   entries: BulkRenderEntry[],
   company: Company,
   onProgress?: (done: number, total: number) => void,
+  opts?: RenderPdfOptions,
 ): Promise<Blob> {
   const zip = new JSZip();
   let done = 0;
   for (const { doc, client, signature } of entries) {
-    const blob = await renderPdfBlob(doc, company, client, signature);
+    const blob = await renderPdfBlob(doc, company, client, signature, opts);
     zip.file(defaultFilename(doc), blob);
     done += 1;
     onProgress?.(done, entries.length);

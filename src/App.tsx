@@ -20,6 +20,7 @@ import { getCompany } from "@/lib/db/queries";
 import { runRecurringCheck } from "@/lib/recurring";
 import { getLocalUser, syncLocalUserFromSession } from "@/lib/auth/queries";
 import { getCurrentSession, onAuthStateChange } from "@/lib/sync/engine";
+import { hasFeature } from "@/lib/auth/permissions";
 
 export function App() {
   const company = useAppStore((s) => s.company);
@@ -78,9 +79,15 @@ export function App() {
     return unsub;
   }, [setCurrentUser]);
 
+  const currentUser = useAppStore((s) => s.currentUser);
+
   // Run recurring check satu kali per app startup (setelah company loaded).
+  // Recurring adalah fitur Pro — skip kalau user belum upgrade. Existing
+  // recurring docs di SQLite tetap aman, cuma generator yang idle.
   useEffect(() => {
     if (!ready || !company || recurringRanRef.current) return;
+    const tier = currentUser?.tier ?? "free";
+    if (!hasFeature(tier, "recurring.invoice")) return;
     recurringRanRef.current = true;
     (async () => {
       try {
@@ -98,7 +105,7 @@ export function App() {
         console.error("[doxpro] runRecurringCheck error:", e);
       }
     })();
-  }, [ready, company, settings.numberingScheme, queryClient]);
+  }, [ready, company, settings.numberingScheme, queryClient, currentUser?.tier]);
 
   if (!ready) {
     return (

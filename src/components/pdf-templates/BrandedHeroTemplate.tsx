@@ -4,6 +4,7 @@ import { docLabel } from "./labels";
 import { logoBox } from "./logoSize";
 import { parseProposalSections } from "./proposalSections";
 import { getClosingText, getIntroText } from "./copy";
+import { BrandingFooter } from "./BrandingFooter";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 const styles = StyleSheet.create({
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export function BrandedHeroTemplate({ doc, company, client, signature }: PdfTemplateProps) {
+export function BrandedHeroTemplate({ doc, company, client, signature, showBranding = true }: PdfTemplateProps) {
   const c = doc.customizations;
   const accent = c.primaryColor ?? "#0f172a";
   const logoDim = logoBox(c.logoSize, "L");
@@ -497,6 +498,7 @@ export function BrandedHeroTemplate({ doc, company, client, signature }: PdfTemp
             </View>
           ) : null}
         </View>
+        <BrandingFooter show={showBranding} />
       </Page>
     </Document>
   );

@@ -4,6 +4,7 @@ import { docLabel } from "./labels";
 import { logoBox } from "./logoSize";
 import { parseProposalSections } from "./proposalSections";
 import { getClosingText, getIntroText } from "./copy";
+import { BrandingFooter } from "./BrandingFooter";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 /**
@@ -182,7 +183,7 @@ const DEFAULT_TERMS: Termin[] = [
   { phase: "III", label: "Pelunasan", sub: "Saat serah-terima / completion", percent: 20 },
 ];
 
-export function ConstructionTemplate({ doc, company, client, signature }: PdfTemplateProps) {
+export function ConstructionTemplate({ doc, company, client, signature, showBranding = true }: PdfTemplateProps) {
   const c = doc.customizations;
   const accent = c.primaryColor ?? "#0f172a";
   const logoDim = logoBox(c.logoSize);
@@ -443,6 +444,7 @@ export function ConstructionTemplate({ doc, company, client, signature }: PdfTem
             </View>
           </View>
         ) : null}
+        <BrandingFooter show={showBranding} />
       </Page>
     </Document>
   );

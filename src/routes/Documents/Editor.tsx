@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Download, FileText, Send, ArrowRight, FileCheck, BookmarkPlus } from "lucide-react";
+import { ArrowLeft, Save, Download, FileText, Send, ArrowRight, FileCheck, BookmarkPlus, Lock, Sparkles } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -47,8 +47,11 @@ import { renderPdfBlob, downloadBlob, defaultFilename } from "@/lib/pdf/generate
 import { buildWhatsAppMessage, normalizePhoneForWA, openWhatsAppChat } from "@/lib/share";
 import { calcTotals, generateDocumentNumber } from "@/lib/calc";
 import { documentSchema } from "@/lib/validators";
+import { useFeature } from "@/lib/auth/session";
+import { UpgradeModal } from "@/components/auth/UpgradeModal";
+import { ProBadge } from "@/components/auth/ProBadge";
 import { useAppStore } from "@/store/useAppStore";
-import { uuid, nowIso } from "@/lib/utils";
+import { uuid, nowIso, cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format";
 import type { DocumentRecord, DocumentType, DocumentStatus, DocumentItem } from "@/types";
 
@@ -74,10 +77,13 @@ export function DocumentEditor() {
   const queryClient = useQueryClient();
   const company = useAppStore((s) => s.company)!;
   const settings = useAppStore((s) => s.settings);
+  const canRemoveBranding = useFeature("watermark.remove");
+  const canUseRecurring = useFeature("recurring.invoice");
   const isNew = !id;
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const { data: existing } = useQuery({
     queryKey: ["document", id],
@@ -292,7 +298,9 @@ export function DocumentEditor() {
       return;
     }
     try {
-      const blob = await renderPdfBlob(doc, company, currentClient, currentSignature);
+      const blob = await renderPdfBlob(doc, company, currentClient, currentSignature, {
+        showBranding: !canRemoveBranding,
+      });
       downloadBlob(blob, defaultFilename(doc));
       toast.success("PDF diunduh");
     } catch (e) {
@@ -437,7 +445,9 @@ export function DocumentEditor() {
     const message = buildWhatsAppMessage(doc, company, currentClient);
     // Download PDF dulu biar user tinggal attach manual di WA
     try {
-      const blob = await renderPdfBlob(doc, company, currentClient, currentSignature);
+      const blob = await renderPdfBlob(doc, company, currentClient, currentSignature, {
+        showBranding: !canRemoveBranding,
+      });
       downloadBlob(blob, defaultFilename(doc));
     } catch (e) {
       toast.error("Gagal generate PDF: " + String(e));
@@ -656,16 +666,25 @@ export function DocumentEditor() {
               </Card>
 
               {doc.type === "invoice" && (
-                <Card className="mt-3">
+                <Card className="mt-3 relative overflow-hidden">
                   <CardHeader>
-                    <CardTitle className="text-base">Recurring (Auto-Generate)</CardTitle>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      Recurring (Auto-Generate)
+                      {!canUseRecurring && <ProBadge />}
+                    </CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">
                       Aktifkan untuk auto-generate copy invoice tiap periode. Cocok untuk hosting
                       bulanan, sewa, langganan jasa. Dokumen baru dibuat sebagai draft saat app
                       dibuka & jatuh tempo periode terlewati.
                     </p>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent
+                    className={cn(
+                      "space-y-3",
+                      !canUseRecurring && "pointer-events-none opacity-50 select-none",
+                    )}
+                    aria-disabled={!canUseRecurring}
+                  >
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label>Frekuensi</Label>
@@ -717,6 +736,21 @@ export function DocumentEditor() {
                       </label>
                     ) : null}
                   </CardContent>
+                  {!canUseRecurring && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-[1px]">
+                      <Button
+                        type="button"
+                        variant="default"
+                        size="sm"
+                        onClick={() => setUpgradeOpen(true)}
+                        className="shadow-lg"
+                      >
+                        <Lock className="h-3.5 w-3.5" />
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Upgrade ke Pro untuk Recurring
+                      </Button>
+                    </div>
+                  )}
                 </Card>
               )}
             </TabsContent>
@@ -922,6 +956,12 @@ export function DocumentEditor() {
           )}
         </div>
       </div>
+
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        feature="Recurring invoice"
+      />
 
       <Dialog
         open={templateDialogOpen}

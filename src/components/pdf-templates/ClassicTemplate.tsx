@@ -4,6 +4,7 @@ import { docLabel } from "./labels";
 import { logoBox } from "./logoSize";
 import { parseProposalSections } from "./proposalSections";
 import { getClosingText, getIntroText } from "./copy";
+import { BrandingFooter } from "./BrandingFooter";
 import { formatCurrency, formatDate, terbilang } from "@/lib/format";
 
 const styles = StyleSheet.create({
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
   validityText: { fontSize: 9, fontStyle: "italic", lineHeight: 1.4 },
 });
 
-export function ClassicTemplate({ doc, company, client, signature }: PdfTemplateProps) {
+export function ClassicTemplate({ doc, company, client, signature, showBranding = true }: PdfTemplateProps) {
   const logoDim = logoBox(doc.customizations.logoSize);
   const logoPos = doc.customizations.logoPosition ?? "center";
   const marginHorizontal = logoPos === "center" ? "auto" : 0;
@@ -385,6 +386,7 @@ export function ClassicTemplate({ doc, company, client, signature }: PdfTemplate
             </View>
           </View>
         )}
+        <BrandingFooter show={showBranding} />
       </Page>
     </Document>
   );
