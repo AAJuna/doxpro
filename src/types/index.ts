@@ -113,10 +113,18 @@ export interface DocumentRecord {
   globalDiscountValue?: number;
   introText?: string;
   closingText?: string;
+  /** Recurring schedule frequency. Null/undefined = bukan recurring. */
+  recurringSchedule?: "weekly" | "monthly" | "yearly" | null;
+  /** ISO date YYYY-MM-DD untuk generate berikut. */
+  recurringNextDate?: string;
+  /** Apakah recurring aktif (di-paused via toggle). */
+  recurringActive?: boolean;
   createdAt: string;
   updatedAt: string;
   items: DocumentItem[];
 }
+
+export type RecurringSchedule = "weekly" | "monthly" | "yearly";
 
 export interface Signature {
   id: string;

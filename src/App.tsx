@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { Onboarding } from "@/routes/Onboarding";
 import { Dashboard } from "@/routes/Dashboard";
@@ -13,12 +15,16 @@ import { Signatures } from "@/routes/Signatures";
 import { Settings } from "@/routes/Settings";
 import { useAppStore } from "@/store/useAppStore";
 import { getCompany } from "@/lib/db/queries";
+import { runRecurringCheck } from "@/lib/recurring";
 
 export function App() {
   const company = useAppStore((s) => s.company);
   const setCompany = useAppStore((s) => s.setCompany);
   const setOnboarded = useAppStore((s) => s.setOnboarded);
+  const settings = useAppStore((s) => s.settings);
   const [ready, setReady] = useState(false);
+  const queryClient = useQueryClient();
+  const recurringRanRef = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -35,6 +41,28 @@ export function App() {
       }
     })();
   }, [setCompany, setOnboarded]);
+
+  // Run recurring check satu kali per app startup (setelah company loaded).
+  useEffect(() => {
+    if (!ready || !company || recurringRanRef.current) return;
+    recurringRanRef.current = true;
+    (async () => {
+      try {
+        const result = await runRecurringCheck(settings.numberingScheme);
+        if (result.generated > 0) {
+          queryClient.invalidateQueries({ queryKey: ["documents"] });
+          toast.success(
+            `${result.generated} dokumen recurring di-generate otomatis. Cek di Documents.`,
+          );
+        }
+        if (result.errors.length > 0) {
+          toast.warning(`${result.errors.length} recurring gagal: ${result.errors[0]}`);
+        }
+      } catch (e) {
+        console.error("[doxpro] runRecurringCheck error:", e);
+      }
+    })();
+  }, [ready, company, settings.numberingScheme, queryClient]);
 
   if (!ready) {
     return (

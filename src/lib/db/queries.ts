@@ -128,6 +128,13 @@ function mapDocument(r: Row, items: DocumentItem[]): DocumentRecord {
     globalDiscountValue: (r.global_discount_value ?? undefined) as number | undefined,
     introText: (r.intro_text ?? undefined) as string | undefined,
     closingText: (r.closing_text ?? undefined) as string | undefined,
+    recurringSchedule: (r.recurring_schedule ?? undefined) as
+      | "weekly"
+      | "monthly"
+      | "yearly"
+      | undefined,
+    recurringNextDate: (r.recurring_next_date ?? undefined) as string | undefined,
+    recurringActive: !!r.recurring_active,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
     items,
@@ -315,7 +322,8 @@ export async function saveDocument(
       `UPDATE documents SET type=?, number=?, date=?, valid_until=?, due_date=?, client_id=?, status=?,
        totals_json=?, customizations_json=?, signature_id=?, notes=?, terms_text=?, payment_method=?,
        received_from=?, proposal_content=?, global_discount_type=?, global_discount_value=?,
-       intro_text=?, closing_text=?, updated_at=? WHERE id=?`,
+       intro_text=?, closing_text=?, recurring_schedule=?, recurring_next_date=?,
+       recurring_active=?, updated_at=? WHERE id=?`,
       [
         input.type,
         input.number,
@@ -336,6 +344,9 @@ export async function saveDocument(
         input.globalDiscountValue ?? null,
         input.introText ?? null,
         input.closingText ?? null,
+        input.recurringSchedule ?? null,
+        input.recurringNextDate ?? null,
+        input.recurringActive ? 1 : 0,
         now,
         id,
       ],
@@ -346,8 +357,9 @@ export async function saveDocument(
       `INSERT INTO documents (id, type, number, date, valid_until, due_date, client_id, status,
        totals_json, customizations_json, signature_id, notes, terms_text, payment_method,
        received_from, proposal_content, global_discount_type, global_discount_value,
-       intro_text, closing_text, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       intro_text, closing_text, recurring_schedule, recurring_next_date, recurring_active,
+       created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.type,
@@ -369,6 +381,9 @@ export async function saveDocument(
         input.globalDiscountValue ?? null,
         input.introText ?? null,
         input.closingText ?? null,
+        input.recurringSchedule ?? null,
+        input.recurringNextDate ?? null,
+        input.recurringActive ? 1 : 0,
         now,
         now,
       ],

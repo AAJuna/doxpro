@@ -33,6 +33,12 @@ pub fn run() {
             sql: include_str!("../../src/lib/db/migrations/0005_document_templates.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "recurring_columns",
+            sql: include_str!("../../src/lib/db/migrations/0006_recurring.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

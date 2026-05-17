@@ -622,6 +622,71 @@ export function DocumentEditor() {
                   )}
                 </CardContent>
               </Card>
+
+              {doc.type === "invoice" && (
+                <Card className="mt-3">
+                  <CardHeader>
+                    <CardTitle className="text-base">Recurring (Auto-Generate)</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Aktifkan untuk auto-generate copy invoice tiap periode. Cocok untuk hosting
+                      bulanan, sewa, langganan jasa. Dokumen baru dibuat sebagai draft saat app
+                      dibuka & jatuh tempo periode terlewati.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label>Frekuensi</Label>
+                        <Select
+                          value={doc.recurringSchedule ?? "none"}
+                          onValueChange={(v) =>
+                            updateDoc({
+                              recurringSchedule:
+                                v === "none" ? null : (v as "weekly" | "monthly" | "yearly"),
+                              recurringActive: v !== "none",
+                              recurringNextDate:
+                                v !== "none" && !doc.recurringNextDate
+                                  ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                                      .toISOString()
+                                      .slice(0, 10)
+                                  : doc.recurringNextDate,
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Tidak recurring</SelectItem>
+                            <SelectItem value="weekly">Mingguan</SelectItem>
+                            <SelectItem value="monthly">Bulanan</SelectItem>
+                            <SelectItem value="yearly">Tahunan</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {doc.recurringSchedule ? (
+                        <div className="space-y-2">
+                          <Label>Generate Berikutnya</Label>
+                          <DatePicker
+                            value={doc.recurringNextDate}
+                            onChange={(v) => updateDoc({ recurringNextDate: v })}
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                    {doc.recurringSchedule ? (
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={doc.recurringActive ?? false}
+                          onChange={(e) => updateDoc({ recurringActive: e.target.checked })}
+                        />
+                        Aktifkan auto-generate
+                      </label>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="items">

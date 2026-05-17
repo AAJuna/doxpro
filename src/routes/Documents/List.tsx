@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X, Sparkles, Send, FileSpreadsheet, ClipboardList } from "lucide-react";
+import { FileText, Plus, Search, Trash2, Copy, Download, FileArchive, X, Sparkles, Send, FileSpreadsheet, ClipboardList, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -436,7 +436,17 @@ export function DocumentsList() {
                   id: "number",
                   header: "Nomor",
                   sortBy: (d) => d.number,
-                  cell: (d) => <span className="font-medium">{d.number}</span>,
+                  cell: (d) => (
+                    <span className="font-medium inline-flex items-center gap-1.5">
+                      {d.number}
+                      {d.recurringSchedule && d.recurringActive ? (
+                        <Badge variant="secondary" className="text-[10px] py-0">
+                          <RotateCw className="h-2.5 w-2.5 mr-0.5" />
+                          recurring
+                        </Badge>
+                      ) : null}
+                    </span>
+                  ),
                 },
                 {
                   id: "type",

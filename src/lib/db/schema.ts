@@ -63,6 +63,9 @@ export const documents = sqliteTable("documents", {
   globalDiscountValue: real("global_discount_value"),
   introText: text("intro_text"),
   closingText: text("closing_text"),
+  recurringSchedule: text("recurring_schedule"),
+  recurringNextDate: text("recurring_next_date"),
+  recurringActive: integer("recurring_active").notNull().default(0),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
