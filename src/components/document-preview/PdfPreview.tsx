@@ -295,16 +295,19 @@ interface PreviewDocumentProps {
 
 function PreviewDocument({ url, zoom, pageNumber, onLoadSuccess }: PreviewDocumentProps) {
   // BlobProvider creates a fresh object URL on every doc change but never
-  // revokes the previous one — leak browser memory. Revoke the old URL when
-  // a new one arrives (or when this component unmounts).
+  // revokes the previous one — leak browser memory.
+  //
+  // We can't revoke inside a useEffect cleanup: React 18 StrictMode invokes
+  // setup → cleanup → setup again on mount, which would revoke the active URL
+  // before react-pdf finishes fetching it ("Failed to load PDF file"). Track
+  // the previous URL via ref and revoke only when a strictly newer URL arrives.
+  // On unmount the last URL is briefly stranded — GC reclaims it.
+  const prevUrlRef = useRef<string | null>(null);
   useEffect(() => {
-    return () => {
-      try {
-        URL.revokeObjectURL(url);
-      } catch {
-        // No-op — already revoked or invalid handle.
-      }
-    };
+    if (prevUrlRef.current && prevUrlRef.current !== url) {
+      URL.revokeObjectURL(prevUrlRef.current);
+    }
+    prevUrlRef.current = url;
   }, [url]);
 
   return (
