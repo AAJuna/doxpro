@@ -28,7 +28,7 @@ export function Onboarding() {
   const setCompany = useAppStore((s) => s.setCompany);
   const setOnboarded = useAppStore((s) => s.setOnboarded);
 
-  const { register, handleSubmit, formState, watch, setValue, trigger, getValues } = useForm<CompanyInput>({
+  const { register, handleSubmit, formState, watch, setValue, trigger } = useForm<CompanyInput>({
     resolver: zodResolver(companySchema),
     defaultValues: {
       name: "",
@@ -65,17 +65,14 @@ export function Onboarding() {
   };
 
   const onSubmit = async (data: CompanyInput) => {
-    console.log("[Onboarding] onSubmit called with:", data);
     setSubmitting(true);
     try {
       const company = await saveCompany(data);
-      console.log("[Onboarding] saveCompany result:", company);
       setCompany(company);
       setOnboarded(true);
       toast.success("Selamat datang di doxpro!");
       navigate("/");
     } catch (e) {
-      console.error("[Onboarding] saveCompany failed:", e);
       toast.error("Gagal menyimpan: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setSubmitting(false);
@@ -83,7 +80,6 @@ export function Onboarding() {
   };
 
   const onError = (errors: typeof formState.errors) => {
-    console.warn("[Onboarding] form validation failed:", errors, "values:", getValues());
     const firstErrorEntry = Object.entries(errors)[0];
     if (firstErrorEntry) {
       const [fieldName, err] = firstErrorEntry;

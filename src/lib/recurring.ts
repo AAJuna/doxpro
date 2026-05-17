@@ -90,11 +90,26 @@ export async function runRecurringCheck(numberingScheme: string): Promise<Recurr
       };
       await saveDocument(copy);
 
-      // Advance source next_date
+      // Advance source next_date. Catch up kalau next_date masih <= today
+      // (user gak buka app beberapa periode). Safety bound:
+      //  - max 1000 iterasi
+      //  - break kalau advanceDate gak progress (invalid input → return same)
       let nextDate = advanceDate(targetDate, schedule);
-      // Catch up kalau next_date masih <= today (gap besar)
-      while (nextDate <= today) {
-        nextDate = advanceDate(nextDate, schedule);
+      let iterGuard = 0;
+      while (nextDate <= today && iterGuard < 1000) {
+        const advanced = advanceDate(nextDate, schedule);
+        if (advanced === nextDate) {
+          // No progress (invalid date) — keluar daripada infinite loop
+          result.errors.push(
+            `${src.number}: advanceDate stuck (invalid date "${nextDate}"), skipping catch-up`,
+          );
+          break;
+        }
+        nextDate = advanced;
+        iterGuard += 1;
+      }
+      if (iterGuard >= 1000) {
+        result.errors.push(`${src.number}: catch-up loop hit max iterations`);
       }
       await saveDocument({ ...src, id: src.id, recurringNextDate: nextDate });
 

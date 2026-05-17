@@ -46,6 +46,7 @@ import {
 import { renderPdfBlob, downloadBlob, defaultFilename } from "@/lib/pdf/generate";
 import { buildWhatsAppMessage, normalizePhoneForWA, openWhatsAppChat } from "@/lib/share";
 import { calcTotals, generateDocumentNumber } from "@/lib/calc";
+import { documentSchema } from "@/lib/validators";
 import { useAppStore } from "@/store/useAppStore";
 import { uuid, nowIso } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format";
@@ -206,8 +207,11 @@ export function DocumentEditor() {
         e.preventDefault();
         const d = docRef.current;
         if (!d || savingRef.current) return;
-        if (!d.clientId) {
-          toast.error("Pilih klien dulu");
+        const parsed = documentSchema.safeParse(d);
+        if (!parsed.success) {
+          const first = parsed.error.issues[0];
+          const path = first.path.join(".") || "form";
+          toast.error(`${path}: ${first.message}`);
           return;
         }
         savingRef.current = true;
@@ -262,8 +266,11 @@ export function DocumentEditor() {
   };
 
   const handleSave = async () => {
-    if (!doc.clientId) {
-      toast.error("Pilih klien dulu");
+    const parsed = documentSchema.safeParse(doc);
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      const path = first.path.join(".") || "form";
+      toast.error(`${path}: ${first.message}`);
       return;
     }
     setSaving(true);

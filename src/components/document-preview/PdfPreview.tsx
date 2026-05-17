@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BlobProvider } from "@react-pdf/renderer";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -269,32 +269,63 @@ export function PdfPreview({ doc, company, client, signature, onCustomizationsCh
               );
             }
             return (
-              <Document
-                key={url}
-                file={url}
-                onLoadSuccess={({ numPages: n }) => {
+              <PreviewDocument
+                url={url}
+                zoom={zoom}
+                pageNumber={pageNumber}
+                onLoadSuccess={(n) => {
                   setNumPages(n);
                   if (pageNumber > n) setPageNumber(n);
                 }}
-                loading={
-                  <Skeleton
-                    className="bg-white shadow"
-                    style={{ width: A4_WIDTH_PT * (zoom / 100), height: 842 * (zoom / 100) }}
-                  />
-                }
-              >
-                <Page
-                  pageNumber={pageNumber}
-                  width={A4_WIDTH_PT * (zoom / 100)}
-                  className="shadow-lg"
-                  renderAnnotationLayer={false}
-                  renderTextLayer={false}
-                />
-              </Document>
+              />
             );
           }}
         </BlobProvider>
       </div>
     </div>
+  );
+}
+
+interface PreviewDocumentProps {
+  url: string;
+  zoom: number;
+  pageNumber: number;
+  onLoadSuccess: (n: number) => void;
+}
+
+function PreviewDocument({ url, zoom, pageNumber, onLoadSuccess }: PreviewDocumentProps) {
+  // BlobProvider creates a fresh object URL on every doc change but never
+  // revokes the previous one — leak browser memory. Revoke the old URL when
+  // a new one arrives (or when this component unmounts).
+  useEffect(() => {
+    return () => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {
+        // No-op — already revoked or invalid handle.
+      }
+    };
+  }, [url]);
+
+  return (
+    <Document
+      key={url}
+      file={url}
+      onLoadSuccess={({ numPages: n }) => onLoadSuccess(n)}
+      loading={
+        <Skeleton
+          className="bg-white shadow"
+          style={{ width: A4_WIDTH_PT * (zoom / 100), height: 842 * (zoom / 100) }}
+        />
+      }
+    >
+      <Page
+        pageNumber={pageNumber}
+        width={A4_WIDTH_PT * (zoom / 100)}
+        className="shadow-lg"
+        renderAnnotationLayer={false}
+        renderTextLayer={false}
+      />
+    </Document>
   );
 }
