@@ -17,6 +17,7 @@ import {
   Monitor,
   User,
   Box,
+  Sparkles,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/command";
 import { useAppStore } from "@/store/useAppStore";
 import { listClients, listDocuments, listProducts } from "@/lib/db/queries";
+import { openWaImportDialog } from "@/components/layout/AppShell";
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -170,6 +172,9 @@ export function CommandPalette() {
         ) : null}
 
         <CommandGroup heading="Buat Dokumen">
+          <CommandItem onSelect={run(() => openWaImportDialog())}>
+            <Sparkles /> Import dari WhatsApp...
+          </CommandItem>
           <CommandItem onSelect={run(() => navigate("/documents/new/invoice"))}>
             <Receipt /> Invoice baru
             <CommandShortcut>Ctrl+N</CommandShortcut>

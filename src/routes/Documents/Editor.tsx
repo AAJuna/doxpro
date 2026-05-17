@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, Download, FileText, Send, ArrowRight, FileCheck, BookmarkPlus } from "lucide-react";
 import {
@@ -58,10 +58,17 @@ const docTitle: Record<DocumentType, string> = {
   proposal: "Proposal",
 };
 
+interface WaImportPayload {
+  items: Array<{ name: string; qty: number; unit: string; price: number }>;
+  clientName?: string;
+}
+
 export function DocumentEditor() {
   const { id, type: typeParam } = useParams<{ id?: string; type?: DocumentType }>();
   const [searchParams] = useSearchParams();
   const templateId = searchParams.get("template");
+  const location = useLocation();
+  const waImport = (location.state as { waImport?: WaImportPayload } | null)?.waImport ?? null;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const company = useAppStore((s) => s.company)!;
@@ -133,15 +140,33 @@ export function DocumentEditor() {
           updatedAt: nowIso(),
           items: template
             ? template.items.map((it) => ({ ...it, id: uuid(), documentId: newDocId }))
+            : waImport
+            ? waImport.items.map((it) => ({
+                id: uuid(),
+                documentId: newDocId,
+                name: it.name,
+                qty: it.qty,
+                unit: it.unit,
+                price: it.price,
+                taxRate: settings.defaultTaxRate ?? 0,
+                discountPct: 0,
+                subtotal: it.qty * it.price,
+              }))
             : [],
         };
         setDoc(newDoc);
         if (template) {
           toast.success(`Template "${template.name}" diterapkan`);
         }
+        if (waImport) {
+          const note = waImport.clientName
+            ? ` Klien terdeteksi: "${waImport.clientName}" — pilih dari dropdown Klien.`
+            : "";
+          toast.success(`${waImport.items.length} item dari WhatsApp di-import.${note}`);
+        }
       })();
     }
-  }, [existing, isNew, typeParam, settings.numberingScheme, templateId]);
+  }, [existing, isNew, typeParam, settings.numberingScheme, templateId, waImport, settings.defaultTaxRate]);
 
   const currentClient = useMemo(() => {
     return clients.find((c) => c.id === doc?.clientId) ?? null;
