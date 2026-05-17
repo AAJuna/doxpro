@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Company, AppSettings } from "@/types";
+import type { Company, AppSettings, LocalUser } from "@/types";
 
 interface AppState {
   company: Company | null;
@@ -8,12 +8,15 @@ interface AppState {
   isOnboarded: boolean;
   theme: "light" | "dark" | "system";
   sidebarCollapsed: boolean;
+  /** Currently signed-in user. NULL means Solo Free mode (no account). */
+  currentUser: LocalUser | null;
 
   setCompany: (c: Company | null) => void;
   setSettings: (s: Partial<AppSettings>) => void;
   setOnboarded: (v: boolean) => void;
   setTheme: (t: "light" | "dark" | "system") => void;
   setSidebarCollapsed: (v: boolean) => void;
+  setCurrentUser: (u: LocalUser | null) => void;
 }
 
 const defaultSettings: AppSettings = {
@@ -34,6 +37,7 @@ export const useAppStore = create<AppState>()(
       isOnboarded: false,
       theme: "system",
       sidebarCollapsed: false,
+      currentUser: null,
 
       setCompany: (c) => set({ company: c }),
       setSettings: (s) =>
@@ -41,6 +45,7 @@ export const useAppStore = create<AppState>()(
       setOnboarded: (v) => set({ isOnboarded: v }),
       setTheme: (t) => set({ theme: t }),
       setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
+      setCurrentUser: (u) => set({ currentUser: u }),
     }),
     {
       name: "doxpro-app",

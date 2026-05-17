@@ -175,3 +175,25 @@ export interface AppSettings {
   /** Timestamp ISO sync terakhir berhasil (optional, dipersist) */
   lastSyncAt?: string;
 }
+
+export type UserRole = "solo" | "admin" | "member";
+export type LicenseTier = "free" | "pro_personal" | "pro_team" | "lifetime";
+
+/**
+ * Local mirror of the signed-in user from Supabase. Singleton: at most one
+ * row exists in the `local_user` SQLite table. Absent → no user signed in,
+ * app operates in Solo Free mode.
+ */
+export interface LocalUser {
+  id: string;
+  email: string;
+  fullName?: string;
+  role: UserRole;
+  orgId?: string;
+  tier: LicenseTier;
+  /** ISO date YYYY-MM-DD — Pro features unlock until this date even offline */
+  licenseValidUntil?: string;
+  /** ISO timestamp of last successful Supabase verification */
+  lastVerifiedAt?: string;
+  createdAt: string;
+}

@@ -26,6 +26,7 @@ import { saveCompany } from "@/lib/db/queries";
 import { useAppStore } from "@/store/useAppStore";
 import { LogoUpload } from "@/components/LogoUpload";
 import { CloudSyncSection } from "@/components/CloudSyncSection";
+import { AccountSection } from "@/components/AccountSection";
 import { downloadBackup, readBackupFile, importBackup } from "@/lib/backup";
 
 export function Settings() {
@@ -117,6 +118,7 @@ export function Settings() {
         <TabsList>
           <TabsTrigger value="company">Perusahaan</TabsTrigger>
           <TabsTrigger value="preferences">Preferensi</TabsTrigger>
+          <TabsTrigger value="account">Akun</TabsTrigger>
           <TabsTrigger value="cloud">Cloud Sync</TabsTrigger>
           <TabsTrigger value="backup">Backup</TabsTrigger>
         </TabsList>
@@ -285,6 +287,10 @@ export function Settings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="account">
+          <AccountSection />
         </TabsContent>
 
         <TabsContent value="cloud">

@@ -39,6 +39,12 @@ pub fn run() {
             sql: include_str!("../../src/lib/db/migrations/0006_recurring.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 7,
+            description: "auth_mirror",
+            sql: include_str!("../../src/lib/db/migrations/0007_auth_mirror.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

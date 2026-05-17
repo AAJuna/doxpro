@@ -137,3 +137,15 @@ export const syncLog = sqliteTable("sync_log", {
   localTs: text("local_ts").notNull(),
   syncedAt: text("synced_at"),
 });
+
+export const localUser = sqliteTable("local_user", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  fullName: text("full_name"),
+  role: text("role").notNull().default("solo"),
+  orgId: text("org_id"),
+  tier: text("tier").notNull().default("free"),
+  licenseValidUntil: text("license_valid_until"),
+  lastVerifiedAt: text("last_verified_at"),
+  createdAt: text("created_at").notNull(),
+});

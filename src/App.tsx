@@ -13,14 +13,19 @@ import { Products } from "@/routes/Products";
 import { Templates } from "@/routes/Templates";
 import { Signatures } from "@/routes/Signatures";
 import { Settings } from "@/routes/Settings";
+import { Login } from "@/routes/Auth/Login";
+import { Register } from "@/routes/Auth/Register";
 import { useAppStore } from "@/store/useAppStore";
 import { getCompany } from "@/lib/db/queries";
 import { runRecurringCheck } from "@/lib/recurring";
+import { getLocalUser, syncLocalUserFromSession } from "@/lib/auth/queries";
+import { getCurrentSession, onAuthStateChange } from "@/lib/sync/engine";
 
 export function App() {
   const company = useAppStore((s) => s.company);
   const setCompany = useAppStore((s) => s.setCompany);
   const setOnboarded = useAppStore((s) => s.setOnboarded);
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const settings = useAppStore((s) => s.settings);
   const [ready, setReady] = useState(false);
   const queryClient = useQueryClient();
@@ -34,13 +39,44 @@ export function App() {
           setCompany(c);
           setOnboarded(true);
         }
+
+        // Restore signed-in user from local SQLite mirror. Then, if online,
+        // re-verify against Supabase to refresh tier/role and detect
+        // sub-status changes. Errors here are non-fatal — app stays usable.
+        const local = await getLocalUser();
+        if (local) setCurrentUser(local);
+        try {
+          const session = await getCurrentSession();
+          if (session) {
+            const fresh = await syncLocalUserFromSession(session);
+            if (fresh) setCurrentUser(fresh);
+          } else if (local) {
+            // Local mirror exists but cloud session expired — clear local
+            setCurrentUser(null);
+          }
+        } catch {
+          // offline or cloud unreachable — local mirror still valid via grace period
+        }
       } catch (e) {
-        console.error("Failed to load company", e);
+        console.error("Failed to load company / session", e);
       } finally {
         setReady(true);
       }
     })();
-  }, [setCompany, setOnboarded]);
+  }, [setCompany, setOnboarded, setCurrentUser]);
+
+  // Subscribe to auth changes (other tabs, magic link callback)
+  useEffect(() => {
+    const unsub = onAuthStateChange(async (session) => {
+      if (session) {
+        const fresh = await syncLocalUserFromSession(session);
+        if (fresh) setCurrentUser(fresh);
+      } else {
+        setCurrentUser(null);
+      }
+    });
+    return unsub;
+  }, [setCurrentUser]);
 
   // Run recurring check satu kali per app startup (setelah company loaded).
   useEffect(() => {
@@ -79,6 +115,8 @@ export function App() {
     return (
       <Routes>
         <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="*" element={<Navigate to="/onboarding" replace />} />
       </Routes>
     );
@@ -86,6 +124,8 @@ export function App() {
 
   return (
     <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route element={<AppShell />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/documents" element={<DocumentsList />} />
