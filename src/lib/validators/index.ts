@@ -59,7 +59,7 @@ export const documentSchema = z
     proposalContent: z.string().optional(),
     items: z.array(documentItemSchema).default([]),
     customizations: z.object({
-      style: z.enum(["classic", "modern", "compact", "minimal"]),
+      style: z.enum(["classic", "modern", "compact", "minimal", "branded"]),
       primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
       fontFamily: z.string(),
       headerLayout: z.enum(["left", "center", "right"]),

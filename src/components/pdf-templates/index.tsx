@@ -3,6 +3,7 @@ import { ModernTemplate } from "./ModernTemplate";
 import { ClassicTemplate } from "./ClassicTemplate";
 import { CompactTemplate } from "./CompactTemplate";
 import { MinimalTemplate } from "./MinimalTemplate";
+import { BrandedHeroTemplate } from "./BrandedHeroTemplate";
 
 export function PdfTemplate(props: PdfTemplateProps) {
   switch (props.doc.customizations.style) {
@@ -12,10 +13,18 @@ export function PdfTemplate(props: PdfTemplateProps) {
       return <CompactTemplate {...props} />;
     case "minimal":
       return <MinimalTemplate {...props} />;
+    case "branded":
+      return <BrandedHeroTemplate {...props} />;
     case "modern":
     default:
       return <ModernTemplate {...props} />;
   }
 }
 
-export { ModernTemplate, ClassicTemplate, CompactTemplate, MinimalTemplate };
+export {
+  ModernTemplate,
+  ClassicTemplate,
+  CompactTemplate,
+  MinimalTemplate,
+  BrandedHeroTemplate,
+};

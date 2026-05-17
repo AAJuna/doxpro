@@ -9,7 +9,7 @@ export type DocumentStatus =
   | "accepted"
   | "rejected";
 
-export type TemplateStyle = "classic" | "modern" | "compact" | "minimal";
+export type TemplateStyle = "classic" | "modern" | "compact" | "minimal" | "branded";
 
 export type Currency = "IDR" | "USD" | "EUR" | "SGD" | "MYR";
 

@@ -11,6 +11,7 @@ const styles: { id: TemplateStyle; label: string; desc: string }[] = [
   { id: "classic", label: "Classic", desc: "Formal Indonesia" },
   { id: "compact", label: "Compact", desc: "1 halaman hemat" },
   { id: "minimal", label: "Minimal", desc: "Sangat clean, 1 accent" },
+  { id: "branded", label: "Branded Hero", desc: "Banner besar, agency vibe" },
 ];
 
 const presetColors = ["#0f172a", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
