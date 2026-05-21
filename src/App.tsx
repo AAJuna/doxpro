@@ -15,12 +15,15 @@ import { Signatures } from "@/routes/Signatures";
 import { Settings } from "@/routes/Settings";
 import { Login } from "@/routes/Auth/Login";
 import { Register } from "@/routes/Auth/Register";
+import { Pricing } from "@/routes/Pricing";
+import { PaymentSuccess } from "@/routes/PaymentSuccess";
 import { useAppStore } from "@/store/useAppStore";
 import { getCompany } from "@/lib/db/queries";
 import { runRecurringCheck } from "@/lib/recurring";
 import { getLocalUser, syncLocalUserFromSession } from "@/lib/auth/queries";
 import { getCurrentSession, onAuthStateChange } from "@/lib/sync/engine";
 import { hasFeature } from "@/lib/auth/permissions";
+import { maybeBackgroundSync } from "@/lib/auth/license";
 
 export function App() {
   const company = useAppStore((s) => s.company);
@@ -107,6 +110,15 @@ export function App() {
     })();
   }, [ready, company, settings.numberingScheme, queryClient, currentUser?.tier]);
 
+  // Background license sync — re-verify with Supabase hourly while app open,
+  // downgrade to free if offline grace period (30d) expired.
+  useEffect(() => {
+    if (!ready || !currentUser) return;
+    maybeBackgroundSync();
+    const id = window.setInterval(() => maybeBackgroundSync(), 60 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [ready, currentUser]);
+
   if (!ready) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -124,6 +136,8 @@ export function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="*" element={<Navigate to="/onboarding" replace />} />
       </Routes>
     );
@@ -133,6 +147,8 @@ export function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/payment/success" element={<PaymentSuccess />} />
       <Route element={<AppShell />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/documents" element={<DocumentsList />} />

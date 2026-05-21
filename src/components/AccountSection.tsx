@@ -183,8 +183,8 @@ export function AccountSection() {
                 Buka premium templates, cloud sync, recurring invoice, AI WhatsApp,
                 dan hilangkan watermark. Mulai Rp 39k/bln.
               </p>
-              <Button size="sm" disabled className="mt-1">
-                <Sparkles className="h-4 w-4" /> Lihat Plan (segera tersedia)
+              <Button size="sm" className="mt-1" onClick={() => navigate("/pricing")}>
+                <Sparkles className="h-4 w-4" /> Lihat Plan & Upgrade
               </Button>
             </div>
           )}

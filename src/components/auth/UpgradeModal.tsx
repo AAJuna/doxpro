@@ -78,8 +78,7 @@ export function UpgradeModal({ open, onOpenChange, feature }: Props) {
 
   const handleSeePlans = () => {
     onOpenChange(false);
-    // Pricing page belum ada (Fase 3) — sementara redirect ke Settings → Akun
-    navigate("/settings");
+    navigate("/pricing");
   };
 
   return (
